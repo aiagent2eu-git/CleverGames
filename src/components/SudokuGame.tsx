@@ -140,8 +140,12 @@ export function SudokuGame({
           {grid.map((value, index) => {
             const isGiven = puzzle.givens[index];
             const isSelected = selectedCell === index;
+            const row = Math.floor(index / 9);
+            const col = index % 9;
+            const block = Math.floor(row / 3) * 3 + Math.floor(col / 3);
             const className = [
               'sudoku-cell',
+              block % 2 === 0 ? 'block-alt' : '',
               isGiven ? 'given' : '',
               isSelected ? 'selected' : '',
               conflicts.has(index) ? 'conflict' : '',

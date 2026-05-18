@@ -296,7 +296,7 @@ button:disabled {
   display: grid;
   aspect-ratio: 1;
   place-items: center;
-  border: 1px solid #c9c0b0;
+  border: 1px solid #bfb29d;
   border-radius: 0;
   background: #fffdf8;
   color: #172126;
@@ -306,17 +306,25 @@ button:disabled {
 }
 
 .sudoku-cell:nth-child(3n) {
-  border-right-color: #172126;
+  border-right: 3px solid #172126;
 }
 
 .sudoku-cell:nth-child(n + 19):nth-child(-n + 27),
 .sudoku-cell:nth-child(n + 46):nth-child(-n + 54) {
-  border-bottom-color: #172126;
+  border-bottom: 3px solid #172126;
+}
+
+.sudoku-cell.block-alt {
+  background: #f4ecdc;
 }
 
 .sudoku-cell.given {
   background: #ede6d7;
   font-weight: 920;
+}
+
+.sudoku-cell.given.block-alt {
+  background: #e3dac7;
 }
 
 .sudoku-cell.selected {
@@ -396,6 +404,21 @@ button:disabled {
   color: #172126;
   font-size: 1.45rem;
   font-weight: 900;
+}
+
+.number-tile {
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease,
+    background 160ms ease;
+}
+
+.number-tile.used {
+  border-color: #bfb7aa;
+  background: #ded8cc;
+  color: #6f7773;
+  opacity: 0.58;
+  text-decoration: line-through;
 }
 
 .letter-tile {

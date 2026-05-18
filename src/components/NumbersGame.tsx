@@ -4,6 +4,7 @@ import {
   countExpressionOperations,
   evaluateNumbersAttempt,
   generateNumbersChallenge,
+  getExpressionNumberUsage,
   type NumbersAttemptResult,
 } from '../game/numbers';
 import { submitDailyResult } from '../services/dailyResultService';
@@ -24,6 +25,7 @@ export function NumbersGame({ dateKey, userId, groupId, playerName, onResultSave
   const [startedAt, setStartedAt] = useState(() => Date.now());
   const [attempt, setAttempt] = useState<NumbersAttemptResult | null>(null);
   const [saved, setSaved] = useState(false);
+  const usedNumberCounts = useMemo(() => getExpressionNumberUsage(expression), [expression]);
 
   useEffect(() => {
     setExpression('');
@@ -100,11 +102,26 @@ export function NumbersGame({ dateKey, userId, groupId, playerName, onResultSave
       </div>
 
       <div className="tile-row" aria-label="Números disponibles">
-        {challenge.numbers.map((number, index) => (
-          <span key={`${number}-${index}`} className="number-tile">
-            {number}
-          </span>
-        ))}
+        {challenge.numbers.map((number, index) => {
+          const instanceNumber = challenge.numbers.slice(0, index + 1).filter((item) => item === number).length;
+          const isUsed = (usedNumberCounts.get(number) ?? 0) >= instanceNumber;
+
+          return (
+            <button
+              key={`${number}-${index}`}
+              className={isUsed ? 'number-tile used' : 'number-tile'}
+              type="button"
+              disabled={isUsed}
+              onClick={() => {
+                setExpression((current) => `${current}${current.trim() ? ' ' : ''}${number}`);
+                setAttempt(null);
+              }}
+              aria-pressed={isUsed}
+            >
+              {number}
+            </button>
+          );
+        })}
       </div>
 
       <label className="field-label" htmlFor="numbers-expression">
@@ -115,7 +132,10 @@ export function NumbersGame({ dateKey, userId, groupId, playerName, onResultSave
           id="numbers-expression"
           value={expression}
           placeholder="(100 x 7) + 25 + 8 - 2"
-          onChange={(event) => setExpression(event.target.value)}
+          onChange={(event) => {
+            setExpression(event.target.value);
+            setAttempt(null);
+          }}
         />
         <button className="icon-button" type="button" onClick={evaluate}>
           Calcular

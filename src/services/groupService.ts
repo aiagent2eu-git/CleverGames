@@ -178,10 +178,10 @@ function getLocalGroups() {
 
   const starter: CompetitionGroup = {
     id: 'local-family',
-    name: 'Grupo demo',
+    name: 'Grupo local',
     description: 'Competición local para probar la experiencia social.',
     ownerId: 'local-user',
-    inviteCode: 'demo',
+    inviteCode: 'local',
     createdAt: new Date().toISOString(),
     role: 'owner',
   };

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CalendarDays, Database, GitBranch, Rocket } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 import { AuthPanel } from './components/AuthPanel';
 import { DailyLeaderboard } from './components/DailyLeaderboard';
 import { GameTabs } from './components/GameTabs';
@@ -188,22 +188,10 @@ function App() {
           <p className="eyebrow">CleverGames</p>
           <h1>Diario de Sudoku, Cifras y Letras</h1>
         </div>
-        <nav className="status-row" aria-label="Preparación de plataformas">
+        <nav className="status-row" aria-label="Fecha del juego">
           <span className="status-pill">
             <CalendarDays size={16} aria-hidden="true" />
             {prettyDate}
-          </span>
-          <span className={isSupabaseConfigured ? 'status-pill ready' : 'status-pill'}>
-            <Database size={16} aria-hidden="true" />
-            {isSupabaseConfigured ? 'Supabase listo' : 'Supabase demo'}
-          </span>
-          <span className="status-pill">
-            <GitBranch size={16} aria-hidden="true" />
-            GitHub repo
-          </span>
-          <span className="status-pill">
-            <Rocket size={16} aria-hidden="true" />
-            Web apps
           </span>
         </nav>
       </header>

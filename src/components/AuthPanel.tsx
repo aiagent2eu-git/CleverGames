@@ -28,7 +28,7 @@ export function AuthPanel({ authState, playerName, onPlayerNameChange, onLogin, 
 
       {authState.isDemo ? (
         <label className="stacked-field">
-          <span>Nombre demo</span>
+          <span>Nombre local</span>
           <input value={playerName} maxLength={40} onChange={(event) => onPlayerNameChange(event.target.value)} />
         </label>
       ) : null}
@@ -36,7 +36,7 @@ export function AuthPanel({ authState, playerName, onPlayerNameChange, onLogin, 
       <p className="help-copy">
         {isSupabaseConfigured
           ? 'Los grupos y resultados se asocian a tu usuario de Google.'
-          : 'Modo demo local. Las credenciales reales van en .env.local y no se suben a Git.'}
+          : 'Modo local. Las credenciales reales van en .env.local y no se suben a Git.'}
       </p>
 
       {isSupabaseConfigured ? (

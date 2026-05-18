@@ -94,6 +94,21 @@ export function countExpressionOperations(expression: string) {
   return tokens.filter((token) => ['+', '-', '*', '/'].includes(token)).length;
 }
 
+export function getExpressionNumberUsage(expression: string) {
+  const tokens = tokenize(expression);
+  const counts = new Map<number, number>();
+  if (!tokens) return counts;
+
+  for (const token of tokens) {
+    if (/^\d+$/.test(token)) {
+      const value = Number(token);
+      counts.set(value, (counts.get(value) ?? 0) + 1);
+    }
+  }
+
+  return counts;
+}
+
 function tryBuildExpression(numbers: number[], rng: () => number): WorkValue {
   let work: WorkValue[] = shuffle(
     numbers.map((value) => ({ value, expression: String(value), steps: [] as string[] })),
