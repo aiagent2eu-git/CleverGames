@@ -16,10 +16,11 @@ import { isSupabaseConfigured } from './lib/supabaseHandler';
 import {
   getCurrentAuthState,
   listenAuthChanges,
-  loginWithGoogle,
   logout,
+  sendLoginCode,
   type AuthState,
   updateLocalProfileName,
+  verifyLoginCode,
 } from './services/authService';
 import { createGroup, getGroupMessages, getGroupsForProfile, joinGroup, sendGroupMessage } from './services/groupService';
 
@@ -260,9 +261,8 @@ function App() {
             authState={authState}
             playerName={playerName}
             onPlayerNameChange={handlePlayerNameChange}
-            onLogin={() => {
-              void loginWithGoogle();
-            }}
+            onSendLoginCode={sendLoginCode}
+            onVerifyLoginCode={verifyLoginCode}
             onLogout={() => {
               void logout().then(refreshAuth);
             }}

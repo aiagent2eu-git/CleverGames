@@ -4,9 +4,10 @@ import {
   getAuthSession,
   isSupabaseConfigured,
   onAuthStateChange,
-  signInWithGoogle,
+  sendEmailOtp,
   signOut,
   upsertProfileRow,
+  verifyEmailOtp,
 } from '../lib/supabaseHandler';
 import type { UserProfile } from '../game/types';
 
@@ -53,8 +54,12 @@ export function listenAuthChanges(callback: () => void) {
   return () => subscription.unsubscribe();
 }
 
-export async function loginWithGoogle() {
-  return signInWithGoogle();
+export async function sendLoginCode(email: string) {
+  return sendEmailOtp(email.trim());
+}
+
+export async function verifyLoginCode(email: string, token: string) {
+  return verifyEmailOtp(email.trim(), token.trim());
 }
 
 export async function logout() {

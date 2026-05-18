@@ -195,6 +195,13 @@ button:disabled {
   color: #fffdf8;
 }
 
+.icon-button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+  transform: none;
+  box-shadow: none;
+}
+
 .player-field {
   display: grid;
   gap: 6px;
@@ -513,6 +520,11 @@ button:disabled {
   display: grid;
   gap: 8px;
   margin-top: 12px;
+}
+
+.auth-form {
+  display: grid;
+  gap: 10px;
 }
 
 .stacked-field span {

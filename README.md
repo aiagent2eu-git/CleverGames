@@ -1,6 +1,6 @@
 # CleverGames
 
-Juego diario web con React/Vite: 10 sudokus diarios, una prueba diaria de Cifras y una prueba diaria de Letras. Los jugadores entran con Google, crean grupos privados, compiten por resultados diarios y hablan en un chat del grupo.
+Juego diario web con React/Vite: 10 sudokus diarios, una prueba diaria de Cifras y una prueba diaria de Letras. Los jugadores entran con email, crean grupos privados, compiten por resultados diarios y hablan en un chat del grupo.
 
 ## Enlaces del proyecto
 
@@ -11,7 +11,7 @@ Juego diario web con React/Vite: 10 sudokus diarios, una prueba diaria de Cifras
 ## Stack
 
 - React + Vite + TypeScript
-- Supabase Auth con Google
+- Supabase Auth con email OTP
 - Supabase Postgres + RLS
 - Generación determinista por fecha local
 - Sudoku con 10 niveles diarios
@@ -43,8 +43,8 @@ Rellena `VITE_SUPABASE_ANON_KEY` solo en `.env.local` y en las variables de ento
 1. Run SQL migrations in order:
    - `sql/20260516-001_create_daily_results.sql`
    - `sql/20260518-002_create_social_groups_auth.sql`
-2. Enable Google provider in Supabase Auth.
-3. Add redirect URLs:
+2. Enable Email provider in Supabase Auth.
+3. Keep OTP/code login enabled and add redirect URLs:
    - `http://localhost:5173`
    - the Vercel production URL
 4. Copy `.env.example` to `.env.local`.
@@ -56,7 +56,7 @@ Without Supabase credentials, results are saved locally in the browser.
 
 The full schema is in `sql/` so anyone can clone the repository and create their own database:
 
-- `profiles`: Google-authenticated player profile mirror.
+- `profiles`: Supabase-authenticated player profile mirror.
 - `groups`: private competition groups with invite codes.
 - `group_members`: group membership and roles.
 - `group_messages`: chat visible only to group members.

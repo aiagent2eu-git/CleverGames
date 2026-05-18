@@ -1,4 +1,4 @@
-# SPEC: Social Groups and Google Auth
+# SPEC: Social Groups and Email Auth
 
 **Author:** AI Agent  
 **Date:** 2026-05-18  
@@ -7,7 +7,7 @@
 
 ## 1. Context and Motivation
 
-CleverGames needs user identity and private competition spaces. Players should sign in with Google, create groups, invite other users, chat, and compare daily results by group and day.
+CleverGames needs user identity and private competition spaces. Players should sign in with email OTP through Supabase Auth, create groups, invite other users, chat, and compare daily results by group and day.
 
 ## 2. Objective
 
@@ -21,9 +21,9 @@ Add Supabase Auth profiles, private groups, group membership, group chat, and gr
 
 ## 4. Functional Requirements
 
-### RF-01: Google User Account
+### RF-01: Email User Account
 
-Players authenticate with Google through Supabase Auth. A profile is mirrored into `profiles` with display name, email, and avatar.
+Players authenticate with email OTP through Supabase Auth. A profile is mirrored into `profiles` with display name and email.
 
 ### RF-02: Groups
 
@@ -45,15 +45,15 @@ Rankings sort by score first. Tie breakers use lower time, lower operation count
 
 - [x] SQL migration creates profiles, groups, group members, group messages, and group-linked daily results.
 - [x] RLS restricts groups, messages, and group results to group members.
-- [x] Frontend has Google login entry point and local demo fallback.
+- [x] Frontend has email login entry point and local fallback.
 - [x] Frontend can create/select groups, join by code, send chat messages, and save group results.
 - [x] `.gitignore` excludes environment files and credential-like artifacts.
-- [x] README documents migrations, OAuth setup, secrets policy, and app roadmap.
+- [x] README documents migrations, email auth setup, secrets policy, and app roadmap.
 
 ## 6. Technical Design
 
 ```text
-Supabase Auth Google
+Supabase Auth Email OTP
   -> profiles
 React App
   -> AuthPanel
@@ -97,7 +97,7 @@ Android, iOS, and Stick TV should reuse the web app as the primary surface. The 
 
 | Risk | Probability | Impact | Mitigation |
 | --- | --- | --- | --- |
-| OAuth redirect misconfiguration | Medium | High | Document local and production redirect URLs |
+| Auth redirect misconfiguration | Low | Medium | Document local and production redirect URLs |
 | Public anon key committed accidentally | Medium | High | `.gitignore`, `.env.example`, README policy |
 | Group RLS too permissive | Low | High | Deny by default and member checks |
 | TV usability differs from mobile web | Medium | Medium | Add focus-visible and remote-control testing before wrapper |

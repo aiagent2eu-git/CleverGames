@@ -103,7 +103,7 @@ export function GroupsPanel({
           </div>
         </>
       ) : (
-        <p className="help-copy">Entra con Google para crear grupos y competir con otros usuarios.</p>
+        <p className="help-copy">Entra con tu email para crear grupos y competir con otros usuarios.</p>
       )}
     </section>
   );

@@ -1,11 +1,11 @@
-# PLAN: Social Groups and Google Auth
+# PLAN: Social Groups and Email Auth
 
 **Date:** 2026-05-18  
 **Related SPEC:** `doc/specs/social-groups-auth/SPEC.md`
 
 ## 1. Architecture
 
-Google login is handled by Supabase Auth. The frontend reads the current session, mirrors profile data, then lets the player work in personal mode or in a selected group.
+Email login is handled by Supabase Auth OTP. The frontend reads the current session, mirrors profile data, then lets the player work in personal mode or in a selected group.
 
 ## 2. Database
 
@@ -18,7 +18,7 @@ The second migration removes public starter result policies and replaces them wi
 
 ## 3. Frontend
 
-- `AuthPanel`: Google login/logout and demo local player name.
+- `AuthPanel`: email code login/logout and local player name.
 - `GroupsPanel`: create groups, select active group, join by invite code.
 - `GroupChat`: group-scoped chat.
 - `DailyLeaderboard`: filtered by date, game, Sudoku level, and selected group.

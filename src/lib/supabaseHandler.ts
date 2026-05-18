@@ -209,19 +209,34 @@ export function onAuthStateChange(callback: (event: AuthChangeEvent, session: Se
   return data.subscription;
 }
 
-export async function signInWithGoogle(): Promise<ServiceResult<null>> {
+export async function sendEmailOtp(email: string): Promise<ServiceResult<null>> {
   const client = getSupabaseClient();
   if (!client) {
     return { data: null, error: { message: 'Supabase is not configured.' } };
   }
 
-  const { error } = await client.auth.signInWithOAuth({
-    provider: 'google',
+  const { error } = await client.auth.signInWithOtp({
+    email,
     options: {
-      redirectTo: window.location.origin,
+      shouldCreateUser: true,
+      emailRedirectTo: window.location.origin,
     },
   });
   return { data: null, error };
+}
+
+export async function verifyEmailOtp(email: string, token: string): Promise<ServiceResult<Session | null>> {
+  const client = getSupabaseClient();
+  if (!client) {
+    return { data: null, error: { message: 'Supabase is not configured.' } };
+  }
+
+  const { data, error } = await client.auth.verifyOtp({
+    email,
+    token,
+    type: 'email',
+  });
+  return { data: data.session, error };
 }
 
 export async function signOut(): Promise<ServiceResult<null>> {

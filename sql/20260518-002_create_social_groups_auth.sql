@@ -1,5 +1,5 @@
 -- ============================================
--- Migration: Add Google Auth profiles, groups, group chat, and group results
+-- Migration: Add Supabase Auth profiles, groups, group chat, and group results
 -- Author: AI Agent
 -- Date: 2026-05-18
 -- ============================================
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   )
 );
 
-COMMENT ON TABLE public.profiles IS 'Public player profiles mirrored from Supabase Auth Google accounts.';
+COMMENT ON TABLE public.profiles IS 'Public player profiles mirrored from Supabase Auth accounts.';
 COMMENT ON COLUMN public.profiles.id IS 'Same id as auth.users.id.';
 
 DROP TRIGGER IF EXISTS set_profiles_updated_at ON public.profiles;
