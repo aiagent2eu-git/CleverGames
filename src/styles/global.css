@@ -360,6 +360,13 @@ button:disabled {
   font-size: 1rem;
 }
 
+.number-pad button.complete {
+  border-color: #bfb7aa;
+  background: #ded8cc;
+  color: #6f7773;
+  text-decoration: line-through;
+}
+
 .action-row,
 .inline-form {
   display: flex;

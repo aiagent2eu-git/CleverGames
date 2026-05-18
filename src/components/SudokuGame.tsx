@@ -31,6 +31,14 @@ export function SudokuGame({
   const [saved, setSaved] = useState(false);
 
   const conflicts = useMemo(() => getSudokuConflicts(grid), [grid]);
+  const numberCounts = useMemo(
+    () =>
+      Array.from({ length: 9 }, (_, index) => {
+        const value = index + 1;
+        return grid.filter((cell) => cell === value).length;
+      }),
+    [grid],
+  );
   const emptyCount = grid.filter((value) => value === 0).length;
 
   useEffect(() => {
@@ -53,6 +61,7 @@ export function SudokuGame({
 
   function placeNumber(value: number) {
     if (selectedCell === null || puzzle.givens[selectedCell] || saved) return;
+    if (numberCounts[value - 1] >= 9 && grid[selectedCell] !== value) return;
     setGrid((current) => current.map((cell, index) => (index === selectedCell ? value : cell)));
   }
 
@@ -169,11 +178,22 @@ export function SudokuGame({
 
         <div className="sudoku-controls">
           <div className="number-pad" aria-label="Números">
-            {Array.from({ length: 9 }, (_, index) => index + 1).map((value) => (
-              <button key={value} type="button" onClick={() => placeNumber(value)}>
-                {value}
-              </button>
-            ))}
+            {Array.from({ length: 9 }, (_, index) => index + 1).map((value) => {
+              const isComplete = numberCounts[value - 1] >= 9;
+
+              return (
+                <button
+                  key={value}
+                  className={isComplete ? 'complete' : ''}
+                  type="button"
+                  disabled={isComplete}
+                  onClick={() => placeNumber(value)}
+                  aria-label={`${value}, ${numberCounts[value - 1]} de 9 colocados`}
+                >
+                  {value}
+                </button>
+              );
+            })}
             <button type="button" onClick={clearCell}>
               Borrar
             </button>
