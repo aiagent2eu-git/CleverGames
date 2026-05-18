@@ -2,12 +2,6 @@
 
 Juego diario web con React/Vite: 10 sudokus diarios, una prueba diaria de Cifras y una prueba diaria de Letras. Los jugadores entran con email, crean grupos privados, compiten por resultados diarios y hablan en un chat del grupo.
 
-## Enlaces del proyecto
-
-- Supabase: https://supabase.com/dashboard/project/pxrglryplngacswthrhv
-- GitHub: https://github.com/aiagent2eu-git/CleverGames
-- Vercel: https://vercel.com/aiagent2eus-projects/clever-games
-
 ## Stack
 
 - React + Vite + TypeScript

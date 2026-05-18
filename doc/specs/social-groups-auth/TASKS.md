@@ -17,6 +17,6 @@
 - [ ] Enable Email provider and OTP/code login in Supabase Auth.
 - [ ] Add `VITE_SUPABASE_ANON_KEY` in local `.env.local` and Vercel env vars.
 - [ ] Run both SQL migrations in the Supabase project.
-- [ ] Push to GitHub after authenticating an account with access to `aiagent2eu-git/CleverGames`.
+- [ ] Push to the chosen Git remote after authenticating an account with repository access.
 - [ ] Add TV remote focus testing before Stick TV wrapper.
 - [ ] Add Android/iOS wrappers after web responsive QA.
