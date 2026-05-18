@@ -7,6 +7,8 @@ type DailyLeaderboardProps = {
   activeGame: GameType;
   dateKey: string;
   sudokuLevel: number;
+  groupId: string | null;
+  groupName: string | null;
   refreshToken: number;
 };
 
@@ -16,7 +18,14 @@ const labels: Record<GameType, string> = {
   letters: 'Letras',
 };
 
-export function DailyLeaderboard({ activeGame, dateKey, sudokuLevel, refreshToken }: DailyLeaderboardProps) {
+export function DailyLeaderboard({
+  activeGame,
+  dateKey,
+  sudokuLevel,
+  groupId,
+  groupName,
+  refreshToken,
+}: DailyLeaderboardProps) {
   const [results, setResults] = useState<DailyResult[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -31,10 +40,11 @@ export function DailyLeaderboard({ activeGame, dateKey, sudokuLevel, refreshToke
       challengeDate: dateKey,
       gameType: activeGame,
       difficulty,
+      groupId,
     });
     setResults(result.data);
     setLoading(false);
-  }, [activeGame, dateKey, difficulty]);
+  }, [activeGame, dateKey, difficulty, groupId]);
 
   useEffect(() => {
     void loadResults();
@@ -46,6 +56,7 @@ export function DailyLeaderboard({ activeGame, dateKey, sudokuLevel, refreshToke
         <div>
           <p className="eyebrow">Clasificación</p>
           <h2>{title}</h2>
+          <p className="scope-copy">{groupName ? `Grupo: ${groupName}` : 'Resultados personales'}</p>
         </div>
         <button className="icon-button" type="button" onClick={loadResults} aria-label="Actualizar clasificación">
           <RefreshCw size={18} className={loading ? 'spin' : ''} />
@@ -61,7 +72,11 @@ export function DailyLeaderboard({ activeGame, dateKey, sudokuLevel, refreshToke
               <span className="rank">{index + 1}</span>
               <span>
                 <strong>{result.playerName}</strong>
-                <small>{Math.round(result.durationMs / 1000)}s</small>
+                <small>
+                  {Math.round(result.durationMs / 1000)}s
+                  {result.operationsCount !== null ? ` · ${result.operationsCount} ops` : ''}
+                  {result.wordLength !== null ? ` · ${result.wordLength} letras` : ''}
+                </small>
               </span>
               <b>{result.score}</b>
             </li>

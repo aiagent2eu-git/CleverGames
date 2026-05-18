@@ -1,6 +1,6 @@
 # CleverGames
 
-Juego diario web con React/Vite: 10 sudokus diarios, una prueba diaria de Cifras y una prueba diaria de Letras. La web está preparada para Supabase, GitHub, Vercel y una futura app Android.
+Juego diario web con React/Vite: 10 sudokus diarios, una prueba diaria de Cifras y una prueba diaria de Letras. Los jugadores entran con Google, crean grupos privados, compiten por resultados diarios y hablan en un chat del grupo.
 
 ## Enlaces del proyecto
 
@@ -11,11 +11,13 @@ Juego diario web con React/Vite: 10 sudokus diarios, una prueba diaria de Cifras
 ## Stack
 
 - React + Vite + TypeScript
+- Supabase Auth con Google
+- Supabase Postgres + RLS
 - Generación determinista por fecha local
 - Sudoku con 10 niveles diarios
 - Cifras con 6 números, objetivo y validación de expresión
 - Letras con 9 letras y diccionario local provisional
-- Supabase para clasificaciones diarias
+- Grupos privados, chat y clasificaciones por grupo/día
 
 ## Local setup
 
@@ -26,13 +28,41 @@ npm run dev
 
 Open `http://localhost:5173`.
 
+## Secrets y credenciales
+
+No se suben credenciales a Git. El repo incluye `.env.example` sin secretos y `.gitignore` ignora `.env`, `.env.local`, `.env.production`, `.vercel`, claves, certificados y ficheros nativos sensibles.
+
+```bash
+cp .env.example .env.local
+```
+
+Rellena `VITE_SUPABASE_ANON_KEY` solo en `.env.local` y en las variables de entorno de Vercel. Aunque la anon key de Supabase es una clave publicable, se mantiene fuera del repo para que cada persona pueda clonar el proyecto y montar su propia instancia.
+
 ## Supabase setup
 
-1. Run `sql/20260516-001_create_daily_results.sql` in the Supabase SQL editor.
-2. Copy `.env.example` to `.env.local`.
-3. Fill in `VITE_SUPABASE_ANON_KEY`.
+1. Run SQL migrations in order:
+   - `sql/20260516-001_create_daily_results.sql`
+   - `sql/20260518-002_create_social_groups_auth.sql`
+2. Enable Google provider in Supabase Auth.
+3. Add redirect URLs:
+   - `http://localhost:5173`
+   - the Vercel production URL
+4. Copy `.env.example` to `.env.local`.
+5. Fill in `VITE_SUPABASE_ANON_KEY`.
 
 Without Supabase credentials, results are saved locally in the browser.
+
+## Database model
+
+The full schema is in `sql/` so anyone can clone the repository and create their own database:
+
+- `profiles`: Google-authenticated player profile mirror.
+- `groups`: private competition groups with invite codes.
+- `group_members`: group membership and roles.
+- `group_messages`: chat visible only to group members.
+- `daily_results`: daily game results, optionally attached to a group.
+
+RLS keeps group data private to members. Results and chat messages are immutable in the first version.
 
 ## Vercel setup
 
@@ -43,6 +73,12 @@ Set these environment variables in the Vercel project:
 
 The repository includes `vercel.json` with the Vite build configuration.
 
-## Android path
+## Apps Android, iOS y Stick TV
 
-The lowest-friction path is Capacitor because the game is web-first and responsive. Once the web gameplay is stable, add Capacitor, configure the Android package, and reuse the Vite build output.
+The lowest-friction path is to keep the web as the core product and wrap it:
+
+- Android app: Capacitor/WebView package over the Vite app.
+- iOS app: Capacitor/WebView package over the same responsive web app.
+- Stick TV app: TV-friendly wrapper over the web app with remote-control navigation.
+
+Usability and responsive behavior are first-class requirements. The web UI must work well on mobile, desktop, tablet and TV-like layouts before native wrappers are shipped.

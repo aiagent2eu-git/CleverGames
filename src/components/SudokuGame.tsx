@@ -7,12 +7,22 @@ import type { AppTextState } from '../game/types';
 type SudokuGameProps = {
   dateKey: string;
   level: number;
+  userId: string | null;
+  groupId: string | null;
   playerName: string;
   onResultSaved: () => void;
   onStateChange: (state: AppTextState['currentChallenge']) => void;
 };
 
-export function SudokuGame({ dateKey, level, playerName, onResultSaved, onStateChange }: SudokuGameProps) {
+export function SudokuGame({
+  dateKey,
+  level,
+  userId,
+  groupId,
+  playerName,
+  onResultSaved,
+  onStateChange,
+}: SudokuGameProps) {
   const puzzle = useMemo(() => generateSudokuPuzzle(dateKey, level), [dateKey, level]);
   const [grid, setGrid] = useState(() => [...puzzle.puzzle]);
   const [selectedCell, setSelectedCell] = useState<number | null>(null);
@@ -83,6 +93,8 @@ export function SudokuGame({ dateKey, level, playerName, onResultSaved, onStateC
     const speedBonus = Math.max(0, 1200 - Math.floor(durationMs / 1000));
     const score = level * 1000 + puzzle.emptyCells * 20 + speedBonus;
     const result = await submitDailyResult({
+      userId,
+      groupId,
       playerName,
       challengeDate: dateKey,
       gameType: 'sudoku',

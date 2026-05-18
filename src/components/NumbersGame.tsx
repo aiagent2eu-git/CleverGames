@@ -1,17 +1,24 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Save } from 'lucide-react';
-import { evaluateNumbersAttempt, generateNumbersChallenge, type NumbersAttemptResult } from '../game/numbers';
+import {
+  countExpressionOperations,
+  evaluateNumbersAttempt,
+  generateNumbersChallenge,
+  type NumbersAttemptResult,
+} from '../game/numbers';
 import { submitDailyResult } from '../services/dailyResultService';
 import type { AppTextState } from '../game/types';
 
 type NumbersGameProps = {
   dateKey: string;
+  userId: string | null;
+  groupId: string | null;
   playerName: string;
   onResultSaved: () => void;
   onStateChange: (state: AppTextState['currentChallenge']) => void;
 };
 
-export function NumbersGame({ dateKey, playerName, onResultSaved, onStateChange }: NumbersGameProps) {
+export function NumbersGame({ dateKey, userId, groupId, playerName, onResultSaved, onStateChange }: NumbersGameProps) {
   const challenge = useMemo(() => generateNumbersChallenge(dateKey), [dateKey]);
   const [expression, setExpression] = useState('');
   const [startedAt, setStartedAt] = useState(() => Date.now());
@@ -46,19 +53,24 @@ export function NumbersGame({ dateKey, playerName, onResultSaved, onStateChange 
     if (!result.valid || result.value === null || result.distance === null || saved) return;
 
     const durationMs = Date.now() - startedAt;
+    const operationsCount = countExpressionOperations(expression);
     const response = await submitDailyResult({
+      userId,
+      groupId,
       playerName,
       challengeDate: dateKey,
       gameType: 'numbers',
       difficulty: null,
       score: result.score,
       durationMs,
+      operationsCount,
       metadata: {
         target: challenge.target,
         numbers: challenge.numbers,
         expression,
         value: result.value,
         distance: result.distance,
+        operationsCount,
       },
     });
 

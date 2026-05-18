@@ -97,7 +97,7 @@ button:disabled {
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-columns: minmax(0, 1fr) 420px;
   gap: 22px;
   align-items: start;
   max-width: 1440px;
@@ -106,8 +106,14 @@ button:disabled {
 
 .play-area,
 .leaderboard,
-.game-panel {
+.game-panel,
+.social-rail {
   min-width: 0;
+}
+
+.social-rail {
+  display: grid;
+  gap: 14px;
 }
 
 .control-bar {
@@ -116,6 +122,30 @@ button:disabled {
   justify-content: space-between;
   gap: 14px;
   margin-bottom: 14px;
+}
+
+.active-group-banner {
+  display: grid;
+  min-width: min(260px, 100%);
+  align-content: center;
+  border: 1px solid #d2cabc;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.active-group-banner span {
+  color: #65706b;
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.active-group-banner strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .game-tabs {
@@ -177,6 +207,9 @@ button:disabled {
 }
 
 .player-field input,
+.stacked-field input,
+.inline-stack input,
+.chat-form input,
 .inline-form input {
   width: 100%;
   min-width: 0;
@@ -397,17 +430,150 @@ button:disabled {
   color: #52605c;
 }
 
-.leaderboard {
-  border-left: 1px solid #d8d0c1;
-  padding-left: 20px;
-}
-
 .panel-heading {
   display: flex;
   align-items: start;
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 18px;
+}
+
+.panel-heading.compact {
+  margin-bottom: 10px;
+}
+
+.panel-heading.compact h2 {
+  font-size: 1.35rem;
+}
+
+.scope-copy,
+.help-copy,
+.muted-line,
+.service-message {
+  margin: 8px 0 0;
+  color: #52605c;
+}
+
+.service-message {
+  border: 1px solid #9bd5c2;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #e9f8f1;
+  color: #0c6f54;
+  font-weight: 800;
+}
+
+.social-card,
+.leaderboard {
+  border: 1px solid #d8d0c1;
+  border-radius: 8px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.stacked-field,
+.inline-stack {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.stacked-field span {
+  color: #65706b;
+  font-size: 0.76rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.group-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.group-row {
+  display: grid;
+  width: 100%;
+  border: 1px solid #d2cabc;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fffdf8;
+  color: #172126;
+  text-align: left;
+}
+
+.group-row.active {
+  border-color: #172126;
+  background: #172126;
+  color: #fffdf8;
+}
+
+.group-row small {
+  margin-top: 4px;
+  color: inherit;
+  opacity: 0.76;
+}
+
+.icon-button.icon-only {
+  flex: 0 0 auto;
+  width: 44px;
+  padding: 0;
+}
+
+.group-chat {
+  display: grid;
+  gap: 10px;
+}
+
+.chat-list {
+  display: grid;
+  gap: 8px;
+  max-height: 300px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.chat-message {
+  border: 1px solid #d8d0c1;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #fffdf8;
+}
+
+.chat-message.mine {
+  border-color: #9bd5c2;
+  background: #e9f8f1;
+}
+
+.chat-message p {
+  margin: 4px 0;
+  color: #172126;
+}
+
+.chat-message small {
+  color: #65706b;
+}
+
+.chat-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.empty-chat {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  color: #52605c;
+  text-align: center;
 }
 
 .score-list {
@@ -483,10 +649,13 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
-  .leaderboard {
-    border-left: 0;
-    border-top: 1px solid #d8d0c1;
-    padding: 20px 0 0;
+  .social-rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .leaderboard,
+  .group-chat {
+    grid-column: 1 / -1;
   }
 }
 
@@ -510,6 +679,10 @@ button:disabled {
   }
 
   .player-field {
+    width: 100%;
+  }
+
+  .active-group-banner {
     width: 100%;
   }
 
@@ -547,5 +720,13 @@ button:disabled {
 
   .icon-button {
     flex: 1 1 auto;
+  }
+
+  .social-rail {
+    grid-template-columns: 1fr;
+  }
+
+  .chat-list {
+    max-height: 260px;
   }
 }

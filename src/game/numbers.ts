@@ -88,6 +88,12 @@ export function evaluateNumbersAttempt(expression: string, challenge: NumbersCha
   };
 }
 
+export function countExpressionOperations(expression: string) {
+  const tokens = tokenize(expression);
+  if (!tokens) return 0;
+  return tokens.filter((token) => ['+', '-', '*', '/'].includes(token)).length;
+}
+
 function tryBuildExpression(numbers: number[], rng: () => number): WorkValue {
   let work: WorkValue[] = shuffle(
     numbers.map((value) => ({ value, expression: String(value), steps: [] as string[] })),

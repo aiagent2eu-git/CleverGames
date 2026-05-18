@@ -12,6 +12,7 @@ export type DailyResultFilter = {
   challengeDate: string;
   gameType: GameType;
   difficulty?: number | null;
+  groupId?: string | null;
 };
 
 type DailyResultServiceResult<T> = {
@@ -46,12 +47,16 @@ export async function submitDailyResult(
   }
 
   const row: DailyResultRowInsert = {
+    user_id: cleaned.userId,
+    group_id: cleaned.groupId,
     player_name: cleaned.playerName,
     challenge_date: cleaned.challengeDate,
     game_type: cleaned.gameType,
     difficulty: cleaned.difficulty ?? null,
     score: cleaned.score,
     duration_ms: cleaned.durationMs,
+    operations_count: cleaned.operationsCount,
+    word_length: cleaned.wordLength,
     metadata: cleaned.metadata ?? {},
   };
 
@@ -70,7 +75,12 @@ export async function submitDailyResult(
 }
 
 function validateSubmission(submission: DailyResultSubmission):
-  | Required<DailyResultSubmission>
+  | (Required<DailyResultSubmission> & {
+      userId: string | null;
+      groupId: string | null;
+      operationsCount: number | null;
+      wordLength: number | null;
+    })
   | {
       error: { message: string };
     } {
@@ -84,12 +94,16 @@ function validateSubmission(submission: DailyResultSubmission):
   }
 
   return {
+    userId: submission.userId ?? null,
+    groupId: submission.groupId ?? null,
     playerName,
     challengeDate: submission.challengeDate,
     gameType: submission.gameType,
     difficulty: submission.difficulty ?? null,
     score: submission.score,
     durationMs: Math.max(0, Math.round(submission.durationMs)),
+    operationsCount: submission.operationsCount ?? null,
+    wordLength: submission.wordLength ?? null,
     metadata: submission.metadata ?? {},
   };
 }
@@ -97,12 +111,16 @@ function validateSubmission(submission: DailyResultSubmission):
 function fromRow(row: DailyResultRow): DailyResult {
   return {
     id: row.id,
+    userId: row.user_id,
+    groupId: row.group_id,
     playerName: row.player_name,
     challengeDate: row.challenge_date,
     gameType: row.game_type,
     difficulty: row.difficulty,
     score: row.score,
     durationMs: row.duration_ms,
+    operationsCount: row.operations_count,
+    wordLength: row.word_length,
     createdAt: row.created_at,
     metadata: row.metadata,
   };
@@ -113,15 +131,26 @@ function getLocalResults(filter: DailyResultFilter) {
   return allResults.filter((result) => matchesFilter(result, filter)).sort(compareResults).slice(0, 10);
 }
 
-function saveLocalResult(submission: Required<DailyResultSubmission>) {
+function saveLocalResult(
+  submission: Required<DailyResultSubmission> & {
+    userId: string | null;
+    groupId: string | null;
+    operationsCount: number | null;
+    wordLength: number | null;
+  },
+) {
   const result: DailyResult = {
     id: `local-${Date.now()}`,
+    userId: submission.userId,
+    groupId: submission.groupId,
     playerName: submission.playerName,
     challengeDate: submission.challengeDate,
     gameType: submission.gameType,
     difficulty: submission.difficulty,
     score: submission.score,
     durationMs: submission.durationMs,
+    operationsCount: submission.operationsCount,
+    wordLength: submission.wordLength,
     metadata: submission.metadata,
     createdAt: new Date().toISOString(),
   };
@@ -146,11 +175,18 @@ function matchesFilter(result: DailyResult, filter: DailyResultFilter) {
   return (
     result.challengeDate === filter.challengeDate &&
     result.gameType === filter.gameType &&
-    (filter.difficulty === undefined || result.difficulty === filter.difficulty)
+    (filter.difficulty === undefined || result.difficulty === filter.difficulty) &&
+    (filter.groupId === undefined || result.groupId === filter.groupId)
   );
 }
 
 function compareResults(a: DailyResult, b: DailyResult) {
   if (b.score !== a.score) return b.score - a.score;
+  if ((a.operationsCount ?? 999) !== (b.operationsCount ?? 999)) {
+    return (a.operationsCount ?? 999) - (b.operationsCount ?? 999);
+  }
+  if ((b.wordLength ?? 0) !== (a.wordLength ?? 0)) {
+    return (b.wordLength ?? 0) - (a.wordLength ?? 0);
+  }
   return a.durationMs - b.durationMs;
 }

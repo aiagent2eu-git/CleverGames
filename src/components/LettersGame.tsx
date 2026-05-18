@@ -6,12 +6,14 @@ import type { AppTextState } from '../game/types';
 
 type LettersGameProps = {
   dateKey: string;
+  userId: string | null;
+  groupId: string | null;
   playerName: string;
   onResultSaved: () => void;
   onStateChange: (state: AppTextState['currentChallenge']) => void;
 };
 
-export function LettersGame({ dateKey, playerName, onResultSaved, onStateChange }: LettersGameProps) {
+export function LettersGame({ dateKey, userId, groupId, playerName, onResultSaved, onStateChange }: LettersGameProps) {
   const challenge = useMemo(() => generateLettersChallenge(dateKey), [dateKey]);
   const [word, setWord] = useState('');
   const [startedAt, setStartedAt] = useState(() => Date.now());
@@ -47,12 +49,15 @@ export function LettersGame({ dateKey, playerName, onResultSaved, onStateChange 
 
     const durationMs = Date.now() - startedAt;
     const response = await submitDailyResult({
+      userId,
+      groupId,
       playerName,
       challengeDate: dateKey,
       gameType: 'letters',
       difficulty: null,
       score: result.score,
       durationMs,
+      wordLength: result.normalizedWord.length,
       metadata: {
         letters: challenge.letters,
         word: result.normalizedWord,
