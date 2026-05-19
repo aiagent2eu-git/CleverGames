@@ -10,6 +10,8 @@ dist
 .vercel
 *.pem
 *.key
+*.jks
+*.keystore
 *.p8
 *.mobileprovision
 GoogleService-Info.plist

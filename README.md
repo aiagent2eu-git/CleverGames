@@ -69,10 +69,29 @@ The repository includes `vercel.json` with the Vite build configuration.
 
 ## Apps Android, iOS y Stick TV
 
-The lowest-friction path is to keep the web as the core product and wrap it:
+The lowest-friction path is to keep the web as the core product and wrap it. Android already uses Capacitor, so the APK packages the same React/Vite build from `dist` and does not reimplement game mechanics.
 
 - Android app: Capacitor/WebView package over the Vite app.
 - iOS app: Capacitor/WebView package over the same responsive web app.
 - Stick TV app: TV-friendly wrapper over the web app with remote-control navigation.
 
 Usability and responsive behavior are first-class requirements. The web UI must work well on mobile, desktop, tablet and TV-like layouts before native wrappers are shipped.
+
+### Android APK
+
+```bash
+npm run android:apk
+```
+
+The debug APK is generated at `android/app/build/outputs/apk/debug/app-debug.apk`.
+
+For Android Studio:
+
+```bash
+npm run android:sync
+npm run android:open
+```
+
+Before building a real APK, set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in your local environment so Vite embeds the right public Supabase configuration. Native signing files such as `.jks` and `.keystore` are ignored by Git.
+
+The Android manifest declares touch as optional and includes a Leanback launcher entry, so the same APK can be installed on phones/tablets and Android TV or stick devices. The UI keeps keyboard/remote focus outlines visible for TV navigation.
