@@ -54,7 +54,7 @@ export async function createGroup(
   const result = await createGroupRow(name, input.description?.trim() || null);
 
   if (result.error || !result.data) {
-    return { data: null, error: result.error ?? { message: 'No se pudo crear el grupo.' } };
+    return { data: null, error: normalizeCreateGroupError(result.error) };
   }
 
   return {
@@ -69,6 +69,19 @@ export async function createGroup(
     },
     error: null,
   };
+}
+
+function normalizeCreateGroupError(error: { message: string } | null) {
+  if (!error) return { message: 'No se pudo crear el grupo.' };
+
+  if (error.message.includes('Could not find the function public.create_group')) {
+    return {
+      message:
+        'Falta actualizar Supabase. Ejecuta sql/20260519-004_repair_create_group_rpc_cache.sql en el SQL Editor.',
+    };
+  }
+
+  return error;
 }
 
 export async function joinGroup(
