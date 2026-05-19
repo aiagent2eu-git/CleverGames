@@ -9,7 +9,6 @@ import type { GameType, JsonValue } from '../game/types';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
-const AUTH_REDIRECT_URL = import.meta.env.VITE_AUTH_REDIRECT_URL as string | undefined;
 
 export const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
@@ -230,11 +229,7 @@ export async function sendEmailOtp(email: string): Promise<ServiceResult<null>> 
 }
 
 function getAuthRedirectUrl() {
-  const currentOrigin = window.location.origin;
-  const configuredUrl = AUTH_REDIRECT_URL?.trim();
-  const isLocalOrigin = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
-
-  return (isLocalOrigin && configuredUrl ? configuredUrl : currentOrigin).replace(/\/$/, '');
+  return window.location.origin.replace(/\/$/, '');
 }
 
 export async function verifyEmailOtp(email: string, token: string): Promise<ServiceResult<Session | null>> {

@@ -32,7 +32,7 @@ cp .env.example .env.local
 
 Rellena `VITE_SUPABASE_ANON_KEY` solo en `.env.local` y en las variables de entorno de Vercel. Aunque la anon key de Supabase es una clave publicable, se mantiene fuera del repo para que cada persona pueda clonar el proyecto y montar su propia instancia.
 
-`VITE_AUTH_REDIRECT_URL` controls where Supabase email links return during local development. Use `http://localhost:5173` locally. In production the app uses the current deployed origin, for example `https://clever-games.vercel.app`.
+Supabase email links return to the current web origin. In local development that is `http://localhost:5173`; in production it is `https://clever-games.vercel.app`.
 
 ## Supabase setup
 
@@ -47,7 +47,7 @@ Rellena `VITE_SUPABASE_ANON_KEY` solo en `.env.local` y en las variables de ento
    - Redirect URLs: `https://clever-games.vercel.app/**` and `http://localhost:5173/**`.
    - Do not leave `http://localhost:3000` unless you are actually running the app there.
 4. Copy `.env.example` to `.env.local`.
-5. Fill in `VITE_SUPABASE_ANON_KEY` and `VITE_AUTH_REDIRECT_URL`.
+5. Fill in `VITE_SUPABASE_ANON_KEY`.
 
 Without Supabase credentials, results are saved locally in the browser.
 
