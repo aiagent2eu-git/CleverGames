@@ -42,7 +42,7 @@ export function AuthPanel({
     }
 
     setCodeSent(true);
-    setMessage('Te hemos enviado un código al email.');
+    setMessage('Te hemos enviado un código o enlace al email.');
   };
 
   const handleVerifyCode = async () => {
