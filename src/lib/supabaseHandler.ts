@@ -230,7 +230,11 @@ export async function sendEmailOtp(email: string): Promise<ServiceResult<null>> 
 }
 
 function getAuthRedirectUrl() {
-  return (AUTH_REDIRECT_URL?.trim() || window.location.origin).replace(/\/$/, '');
+  const currentOrigin = window.location.origin;
+  const configuredUrl = AUTH_REDIRECT_URL?.trim();
+  const isLocalOrigin = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+
+  return (isLocalOrigin && configuredUrl ? configuredUrl : currentOrigin).replace(/\/$/, '');
 }
 
 export async function verifyEmailOtp(email: string, token: string): Promise<ServiceResult<Session | null>> {
