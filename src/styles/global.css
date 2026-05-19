@@ -508,6 +508,33 @@ button:disabled {
   background: rgba(255, 255, 255, 0.38);
 }
 
+.locked-play {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-height: 280px;
+  border: 1px solid #d8d0c1;
+  border-radius: 8px;
+  padding: clamp(18px, 4vw, 34px);
+  background: rgba(255, 255, 255, 0.46);
+  color: #172126;
+}
+
+.locked-play svg {
+  flex: 0 0 auto;
+}
+
+.locked-play h2 {
+  margin: 4px 0 8px;
+  font-size: clamp(1.55rem, 3vw, 2.2rem);
+}
+
+.locked-play p:last-child {
+  max-width: 540px;
+  margin: 0;
+  color: #52605c;
+}
+
 .avatar {
   width: 48px;
   height: 48px;
@@ -726,6 +753,11 @@ button:disabled {
 
   .active-group-banner {
     width: 100%;
+  }
+
+  .locked-play {
+    align-items: flex-start;
+    min-height: 220px;
   }
 
   .level-selector {

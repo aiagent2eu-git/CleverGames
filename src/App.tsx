@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, LockKeyhole } from 'lucide-react';
 import { AuthPanel } from './components/AuthPanel';
 import { DailyLeaderboard } from './components/DailyLeaderboard';
 import { GameTabs } from './components/GameTabs';
@@ -19,7 +19,6 @@ import {
   logout,
   sendLoginCode,
   type AuthState,
-  updateLocalProfileName,
   verifyLoginCode,
 } from './services/authService';
 import { createGroup, getGroupMessages, getGroupsForProfile, joinGroup, sendGroupMessage } from './services/groupService';
@@ -55,6 +54,7 @@ function App() {
     () => groups.find((group) => group.id === selectedGroupId) ?? null,
     [groups, selectedGroupId],
   );
+  const authenticatedProfile = authState.isDemo ? null : authState.profile;
 
   const refreshAuth = useCallback(async () => {
     const next = await getCurrentAuthState();
@@ -66,10 +66,10 @@ function App() {
   }, []);
 
   const refreshGroups = useCallback(async () => {
-    const result = await getGroupsForProfile(authState.profile);
+    const result = await getGroupsForProfile(authenticatedProfile);
     setGroups(result.data);
     if (result.error) setStatusMessage(result.error.message);
-  }, [authState.profile]);
+  }, [authenticatedProfile]);
 
   const refreshMessages = useCallback(async () => {
     const result = await getGroupMessages(selectedGroupId);
@@ -98,15 +98,6 @@ function App() {
     void refreshMessages();
   }, [refreshMessages]);
 
-  const handlePlayerNameChange = useCallback((name: string) => {
-    setPlayerName(name);
-    localStorage.setItem('clevergames.playerName', name);
-    if (!isSupabaseConfigured) {
-      updateLocalProfileName(name);
-      void getCurrentAuthState().then(setAuthState);
-    }
-  }, []);
-
   const handleResultSaved = useCallback(() => {
     localStorage.setItem('clevergames.playerName', playerName.trim());
     setStatusMessage(selectedGroup ? `Resultado guardado en ${selectedGroup.name}.` : 'Resultado guardado.');
@@ -115,8 +106,8 @@ function App() {
 
   const handleCreateGroup = useCallback(
     async (name: string, description: string) => {
-      if (!authState.profile) return;
-      const result = await createGroup(authState.profile, { name, description });
+      if (!authenticatedProfile) return;
+      const result = await createGroup(authenticatedProfile, { name, description });
       if (result.error) {
         setStatusMessage(result.error.message);
         return;
@@ -128,13 +119,13 @@ function App() {
         await refreshGroups();
       }
     },
-    [authState.profile, refreshGroups],
+    [authenticatedProfile, refreshGroups],
   );
 
   const handleJoinGroup = useCallback(
     async (inviteCode: string) => {
-      if (!authState.profile) return;
-      const result = await joinGroup(authState.profile, inviteCode);
+      if (!authenticatedProfile) return;
+      const result = await joinGroup(authenticatedProfile, inviteCode);
       if (result.error) {
         setStatusMessage(result.error.message);
         return;
@@ -146,20 +137,20 @@ function App() {
         await refreshGroups();
       }
     },
-    [authState.profile, refreshGroups],
+    [authenticatedProfile, refreshGroups],
   );
 
   const handleSendMessage = useCallback(
     async (body: string) => {
-      if (!authState.profile || !selectedGroupId) return;
-      const result = await sendGroupMessage(authState.profile, selectedGroupId, body);
+      if (!authenticatedProfile || !selectedGroupId) return;
+      const result = await sendGroupMessage(authenticatedProfile, selectedGroupId, body);
       if (result.error) {
         setStatusMessage(result.error.message);
         return;
       }
       await refreshMessages();
     },
-    [authState.profile, refreshMessages, selectedGroupId],
+    [authenticatedProfile, refreshMessages, selectedGroupId],
   );
 
   useEffect(() => {
@@ -179,8 +170,9 @@ function App() {
     };
   }, [activeGame, currentChallenge, dateKey, selectedGroupId, sudokuLevel]);
 
-  const userId = authState.profile?.id ?? null;
-  const effectivePlayerName = playerName.trim() || authState.profile?.displayName || 'Player';
+  const userId = authenticatedProfile?.id ?? null;
+  const canPlay = Boolean(authenticatedProfile);
+  const effectivePlayerName = playerName.trim() || authenticatedProfile?.displayName || 'Player';
 
   return (
     <main className="app-shell">
@@ -204,63 +196,74 @@ function App() {
         transition={{ duration: 0.35, ease: 'easeOut' }}
       >
         <section className="play-area" aria-label="Juego diario">
-          <div className="control-bar">
-            <GameTabs activeGame={activeGame} onChange={setActiveGame} />
-            {selectedGroup ? (
-              <div className="active-group-banner">
-                <span>Grupo activo</span>
-                <strong>{selectedGroup.name}</strong>
+          {canPlay ? (
+            <>
+              <div className="control-bar">
+                <GameTabs activeGame={activeGame} onChange={setActiveGame} />
+                {selectedGroup ? (
+                  <div className="active-group-banner">
+                    <span>Grupo activo</span>
+                    <strong>{selectedGroup.name}</strong>
+                  </div>
+                ) : (
+                  <div className="active-group-banner">
+                    <span>Resultados</span>
+                    <strong>Personales</strong>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="active-group-banner">
-                <span>Resultados</span>
-                <strong>Personales</strong>
+
+              {activeGame === 'sudoku' ? <LevelSelector level={sudokuLevel} onChange={setSudokuLevel} /> : null}
+
+              {activeGame === 'sudoku' ? (
+                <SudokuGame
+                  dateKey={dateKey}
+                  level={sudokuLevel}
+                  userId={userId}
+                  groupId={selectedGroupId}
+                  playerName={effectivePlayerName}
+                  onResultSaved={handleResultSaved}
+                  onStateChange={setCurrentChallenge}
+                />
+              ) : null}
+
+              {activeGame === 'numbers' ? (
+                <NumbersGame
+                  dateKey={dateKey}
+                  userId={userId}
+                  groupId={selectedGroupId}
+                  playerName={effectivePlayerName}
+                  onResultSaved={handleResultSaved}
+                  onStateChange={setCurrentChallenge}
+                />
+              ) : null}
+
+              {activeGame === 'letters' ? (
+                <LettersGame
+                  dateKey={dateKey}
+                  userId={userId}
+                  groupId={selectedGroupId}
+                  playerName={effectivePlayerName}
+                  onResultSaved={handleResultSaved}
+                  onStateChange={setCurrentChallenge}
+                />
+              ) : null}
+            </>
+          ) : (
+            <section className="locked-play" aria-label="Juego bloqueado">
+              <LockKeyhole size={32} aria-hidden="true" />
+              <div>
+                <p className="eyebrow">Acceso privado</p>
+                <h2>Autentícate para jugar</h2>
+                <p>Entra con tu email para desbloquear los retos diarios y guardar tus resultados.</p>
               </div>
-            )}
-          </div>
-
-          {activeGame === 'sudoku' ? <LevelSelector level={sudokuLevel} onChange={setSudokuLevel} /> : null}
-
-          {activeGame === 'sudoku' ? (
-            <SudokuGame
-              dateKey={dateKey}
-              level={sudokuLevel}
-              userId={userId}
-              groupId={selectedGroupId}
-              playerName={effectivePlayerName}
-              onResultSaved={handleResultSaved}
-              onStateChange={setCurrentChallenge}
-            />
-          ) : null}
-
-          {activeGame === 'numbers' ? (
-            <NumbersGame
-              dateKey={dateKey}
-              userId={userId}
-              groupId={selectedGroupId}
-              playerName={effectivePlayerName}
-              onResultSaved={handleResultSaved}
-              onStateChange={setCurrentChallenge}
-            />
-          ) : null}
-
-          {activeGame === 'letters' ? (
-            <LettersGame
-              dateKey={dateKey}
-              userId={userId}
-              groupId={selectedGroupId}
-              playerName={effectivePlayerName}
-              onResultSaved={handleResultSaved}
-              onStateChange={setCurrentChallenge}
-            />
-          ) : null}
+            </section>
+          )}
         </section>
 
         <aside className="social-rail" aria-label="Social y clasificación">
           <AuthPanel
             authState={authState}
-            playerName={playerName}
-            onPlayerNameChange={handlePlayerNameChange}
             onSendLoginCode={sendLoginCode}
             onVerifyLoginCode={verifyLoginCode}
             onLogout={() => {
@@ -268,7 +271,7 @@ function App() {
             }}
           />
           <GroupsPanel
-            profile={authState.profile}
+            profile={authenticatedProfile}
             groups={groups}
             selectedGroupId={selectedGroupId}
             onSelectGroup={setSelectedGroupId}
@@ -285,7 +288,7 @@ function App() {
             refreshToken={refreshToken}
           />
           <GroupChat
-            profile={authState.profile}
+            profile={authenticatedProfile}
             group={selectedGroup}
             messages={messages}
             onSendMessage={handleSendMessage}

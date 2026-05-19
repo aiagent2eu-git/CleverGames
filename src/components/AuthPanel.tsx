@@ -7,8 +7,6 @@ type AuthActionResult = Promise<{ error: { message: string } | null }>;
 
 type AuthPanelProps = {
   authState: AuthState;
-  playerName: string;
-  onPlayerNameChange: (name: string) => void;
   onSendLoginCode: (email: string) => AuthActionResult;
   onVerifyLoginCode: (email: string, token: string) => AuthActionResult;
   onLogout: () => void;
@@ -16,13 +14,11 @@ type AuthPanelProps = {
 
 export function AuthPanel({
   authState,
-  playerName,
-  onPlayerNameChange,
   onSendLoginCode,
   onVerifyLoginCode,
   onLogout,
 }: AuthPanelProps) {
-  const profile = authState.profile;
+  const profile = authState.isDemo ? null : authState.profile;
   const [email, setEmail] = useState('');
   const [token, setToken] = useState('');
   const [codeSent, setCodeSent] = useState(false);
@@ -80,17 +76,10 @@ export function AuthPanel({
       {profile?.avatarUrl ? <img className="avatar" src={profile.avatarUrl} alt="" /> : null}
       {profile?.email ? <p className="muted-line">{profile.email}</p> : null}
 
-      {authState.isDemo ? (
-        <label className="stacked-field">
-          <span>Nombre local</span>
-          <input value={playerName} maxLength={40} onChange={(event) => onPlayerNameChange(event.target.value)} />
-        </label>
-      ) : null}
-
       <p className="help-copy">
         {isSupabaseConfigured
           ? 'Los grupos y resultados se asocian a tu email.'
-          : 'Modo local. Las credenciales reales van en .env.local y no se suben a Git.'}
+          : 'Configura Supabase en .env.local para habilitar el acceso por email.'}
       </p>
 
       {isSupabaseConfigured ? (
