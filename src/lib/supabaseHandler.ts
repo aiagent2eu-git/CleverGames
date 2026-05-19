@@ -134,6 +134,10 @@ type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      create_group: {
+        Args: { group_name: string; group_description?: string | null };
+        Returns: Database['public']['Tables']['groups']['Row'];
+      };
       join_group_by_invite: {
         Args: { target_invite_code: string };
         Returns: Database['public']['Tables']['groups']['Row'];
@@ -284,11 +288,14 @@ export async function fetchGroupRowsForUser(userId: string): Promise<
   return { data, error: null };
 }
 
-export async function insertGroupRow(record: GroupRowInsert): Promise<ServiceResult<GroupRow | null>> {
+export async function createGroupRow(name: string, description: string | null): Promise<ServiceResult<GroupRow | null>> {
   const client = getSupabaseClient();
   if (!client) return { data: null, error: { message: 'Supabase is not configured.' } };
 
-  const { data, error } = await client.from('groups').insert(record).select().single();
+  const { data, error } = await client.rpc('create_group', {
+    group_name: name,
+    group_description: description,
+  });
   return { data: data ?? null, error };
 }
 

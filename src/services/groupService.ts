@@ -1,8 +1,8 @@
 import {
+  createGroupRow,
   fetchGroupMessageRows,
   fetchGroupRowsForUser,
   insertGroupMessageRow,
-  insertGroupRow,
   isSupabaseConfigured,
   joinGroupByInviteCode,
 } from '../lib/supabaseHandler';
@@ -51,11 +51,7 @@ export async function createGroup(
     return { data: saveLocalGroup(name, input.description ?? '', profile), error: null };
   }
 
-  const result = await insertGroupRow({
-    name,
-    description: input.description?.trim() || null,
-    owner_id: profile.id,
-  });
+  const result = await createGroupRow(name, input.description?.trim() || null);
 
   if (result.error || !result.data) {
     return { data: null, error: result.error ?? { message: 'No se pudo crear el grupo.' } };

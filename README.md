@@ -37,6 +37,7 @@ Rellena `VITE_SUPABASE_ANON_KEY` solo en `.env.local` y en las variables de ento
 1. Run SQL migrations in order:
    - `sql/20260516-001_create_daily_results.sql`
    - `sql/20260518-002_create_social_groups_auth.sql`
+   - `sql/20260519-003_create_group_rpc.sql`
 2. Enable Email provider in Supabase Auth.
 3. Keep OTP/code login enabled and add redirect URLs:
    - `http://localhost:5173`
