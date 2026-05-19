@@ -5,7 +5,7 @@ Juego diario web con React/Vite: 10 sudokus diarios, una prueba diaria de Cifras
 ## Stack
 
 - React + Vite + TypeScript
-- Supabase Auth con email OTP
+- Supabase Auth con email magic link
 - Supabase Postgres + RLS
 - Generación determinista por fecha local
 - Sudoku con 10 niveles diarios
@@ -41,7 +41,7 @@ Rellena `VITE_SUPABASE_ANON_KEY` solo en `.env.local` y en las variables de ento
    - `sql/20260518-002_create_social_groups_auth.sql`
    - `sql/20260519-003_create_group_rpc.sql`
    - `sql/20260519-004_repair_create_group_rpc_cache.sql`
-2. Enable Email provider in Supabase Auth.
+2. Enable Email provider in Supabase Auth and use magic links for login.
 3. In Supabase Auth URL Configuration, set:
    - Site URL: `https://clever-games.vercel.app`
    - Redirect URLs: `https://clever-games.vercel.app/**` and `http://localhost:5173/**`.

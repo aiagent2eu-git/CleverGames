@@ -19,7 +19,6 @@ import {
   logout,
   sendLoginCode,
   type AuthState,
-  verifyLoginCode,
 } from './services/authService';
 import { createGroup, getGroupMessages, getGroupsForProfile, joinGroup, sendGroupMessage } from './services/groupService';
 
@@ -265,7 +264,6 @@ function App() {
           <AuthPanel
             authState={authState}
             onSendLoginCode={sendLoginCode}
-            onVerifyLoginCode={verifyLoginCode}
             onLogout={() => {
               void logout().then(refreshAuth);
             }}

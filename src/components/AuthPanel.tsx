@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LogIn, LogOut, Mail, UserRound } from 'lucide-react';
+import { LogOut, Mail, UserRound } from 'lucide-react';
 import { isSupabaseConfigured } from '../lib/supabaseHandler';
 import type { AuthState } from '../services/authService';
 
@@ -8,24 +8,21 @@ type AuthActionResult = Promise<{ error: { message: string } | null }>;
 type AuthPanelProps = {
   authState: AuthState;
   onSendLoginCode: (email: string) => AuthActionResult;
-  onVerifyLoginCode: (email: string, token: string) => AuthActionResult;
   onLogout: () => void;
 };
 
 export function AuthPanel({
   authState,
   onSendLoginCode,
-  onVerifyLoginCode,
   onLogout,
 }: AuthPanelProps) {
   const profile = authState.isDemo ? null : authState.profile;
   const [email, setEmail] = useState('');
-  const [token, setToken] = useState('');
-  const [codeSent, setCodeSent] = useState(false);
+  const [linkSent, setLinkSent] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [message, setMessage] = useState('');
 
-  const handleSendCode = async () => {
+  const handleSendLink = async () => {
     const normalizedEmail = email.trim();
     if (!normalizedEmail.includes('@')) {
       setMessage('Escribe un email válido.');
@@ -41,26 +38,8 @@ export function AuthPanel({
       return;
     }
 
-    setCodeSent(true);
-    setMessage('Te hemos enviado un código o enlace al email.');
-  };
-
-  const handleVerifyCode = async () => {
-    if (token.trim().length < 6) {
-      setMessage('Escribe el código completo.');
-      return;
-    }
-
-    setIsBusy(true);
-    const result = await onVerifyLoginCode(email, token);
-    setIsBusy(false);
-
-    if (result.error) {
-      setMessage(result.error.message);
-      return;
-    }
-
-    setMessage('');
+    setLinkSent(true);
+    setMessage('Te hemos enviado un enlace de acceso. Abre ese enlace desde el email para entrar.');
   };
 
   return (
@@ -100,27 +79,15 @@ export function AuthPanel({
                 onChange={(event) => setEmail(event.target.value)}
               />
             </label>
-            {codeSent ? (
-              <label className="stacked-field">
-                <span>Código</span>
-                <input
-                  value={token}
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  placeholder="123456"
-                  onChange={(event) => setToken(event.target.value)}
-                />
-              </label>
-            ) : null}
             {message ? <p className="muted-line">{message}</p> : null}
             <button
               className="icon-button primary"
               type="button"
               disabled={isBusy}
-              onClick={codeSent ? handleVerifyCode : handleSendCode}
+              onClick={handleSendLink}
             >
-              {codeSent ? <LogIn size={18} /> : <Mail size={18} />}
-              <span>{isBusy ? 'Un momento...' : codeSent ? 'Confirmar código' : 'Enviar código'}</span>
+              <Mail size={18} />
+              <span>{isBusy ? 'Un momento...' : linkSent ? 'Reenviar enlace' : 'Enviar enlace'}</span>
             </button>
           </div>
         )

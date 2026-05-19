@@ -6,7 +6,7 @@
 ## Completed
 
 - [x] Add SQL migration for profiles, groups, memberships, group chat, and group results.
-- [x] Add frontend auth service and email login entry point.
+- [x] Add frontend auth service and email magic-link login entry point.
 - [x] Add groups service with Supabase/local fallback.
 - [x] Add group UI, selected group state, and group chat.
 - [x] Save results with user/group/tie-break metadata.
@@ -14,7 +14,7 @@
 
 ## Pending
 
-- [ ] Enable Email provider and OTP/code login in Supabase Auth.
+- [ ] Enable Email provider and magic-link login in Supabase Auth.
 - [ ] Add `VITE_SUPABASE_ANON_KEY` in local `.env.local` and Vercel env vars.
 - [ ] Run both SQL migrations in the Supabase project.
 - [ ] Push to the chosen Git remote after authenticating an account with repository access.

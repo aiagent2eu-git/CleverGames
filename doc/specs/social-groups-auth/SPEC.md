@@ -7,7 +7,7 @@
 
 ## 1. Context and Motivation
 
-CleverGames needs user identity and private competition spaces. Players should sign in with email OTP through Supabase Auth, create groups, invite other users, chat, and compare daily results by group and day.
+CleverGames needs user identity and private competition spaces. Players should sign in with email magic links through Supabase Auth, create groups, invite other users, chat, and compare daily results by group and day.
 
 ## 2. Objective
 
@@ -23,7 +23,7 @@ Add Supabase Auth profiles, private groups, group membership, group chat, and gr
 
 ### RF-01: Email User Account
 
-Players authenticate with email OTP through Supabase Auth. A profile is mirrored into `profiles` with display name and email.
+Players authenticate with email magic links through Supabase Auth. A profile is mirrored into `profiles` with display name and email.
 
 ### RF-02: Groups
 
@@ -53,7 +53,7 @@ Rankings sort by score first. Tie breakers use lower time, lower operation count
 ## 6. Technical Design
 
 ```text
-Supabase Auth Email OTP
+Supabase Auth Email Magic Link
   -> profiles
 React App
   -> AuthPanel

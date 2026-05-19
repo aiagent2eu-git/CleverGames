@@ -5,7 +5,7 @@
 
 ## 1. Architecture
 
-Email login is handled by Supabase Auth OTP. The frontend reads the current session, mirrors profile data, then lets the player work in personal mode or in a selected group.
+Email login is handled by Supabase Auth magic links. The frontend reads the current session, mirrors profile data, then lets the player work in personal mode or in a selected group.
 
 ## 2. Database
 
@@ -18,7 +18,7 @@ The second migration removes public starter result policies and replaces them wi
 
 ## 3. Frontend
 
-- `AuthPanel`: email code login/logout and local player name.
+- `AuthPanel`: email magic-link login/logout.
 - `GroupsPanel`: create groups, select active group, join by invite code.
 - `GroupChat`: group-scoped chat.
 - `DailyLeaderboard`: filtered by date, game, Sudoku level, and selected group.
