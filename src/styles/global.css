@@ -107,6 +107,32 @@ input:focus-visible {
   color: #0c6f54;
 }
 
+.section-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(140px, 220px));
+  gap: 10px;
+  max-width: 1440px;
+  margin: 0 auto 20px;
+}
+
+.section-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  border: 1px solid #172126;
+  border-radius: 8px;
+  background: #fffdf8;
+  color: #172126;
+  font-weight: 850;
+}
+
+.section-tab.active {
+  background: #172126;
+  color: #fffdf8;
+}
+
 .workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 420px;
@@ -126,6 +152,50 @@ input:focus-visible {
 .social-rail {
   display: grid;
   gap: 14px;
+}
+
+.group-dashboard {
+  display: grid;
+  grid-template-columns: 420px minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.groups-column,
+.group-detail {
+  display: grid;
+  min-width: 0;
+  gap: 14px;
+}
+
+.group-score-controls {
+  display: grid;
+  gap: 14px;
+}
+
+.group-score-controls h2 {
+  margin: 0;
+  font-size: clamp(1.45rem, 2vw, 2.25rem);
+}
+
+.group-score-controls .game-tabs {
+  width: min(100%, 520px);
+}
+
+.group-score-controls .level-selector {
+  margin-bottom: 0;
+}
+
+.empty-group-state h2 {
+  margin: 4px 0 8px;
+  font-size: clamp(1.45rem, 2vw, 2.25rem);
+}
+
+.empty-group-state p:last-child {
+  margin: 0;
+  color: #52605c;
 }
 
 .control-bar {
@@ -730,6 +800,10 @@ input:focus-visible {
     grid-template-columns: 1fr;
   }
 
+  .group-dashboard {
+    grid-template-columns: 1fr;
+  }
+
   .social-rail {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -753,6 +827,10 @@ input:focus-visible {
     font-size: 2rem;
   }
 
+  .section-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .control-bar,
   .game-header {
     flex-direction: column;
@@ -761,6 +839,10 @@ input:focus-visible {
   .game-tabs {
     width: 100%;
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .group-score-controls .game-tabs {
+    width: 100%;
   }
 
   .player-field {

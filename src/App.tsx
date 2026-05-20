@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CalendarDays, LockKeyhole } from 'lucide-react';
+import { CalendarDays, Gamepad2, LockKeyhole, UsersRound } from 'lucide-react';
 import { AuthPanel } from './components/AuthPanel';
 import { DailyLeaderboard } from './components/DailyLeaderboard';
 import { GameTabs } from './components/GameTabs';
@@ -22,6 +22,8 @@ import {
 } from './services/authService';
 import { createGroup, getGroupMessages, getGroupsForProfile, joinGroup, sendGroupMessage } from './services/groupService';
 
+type AppView = 'play' | 'groups';
+
 declare global {
   interface Window {
     render_game_to_text?: () => string;
@@ -36,6 +38,7 @@ const initialAuthState: AuthState = {
 };
 
 function App() {
+  const [activeView, setActiveView] = useState<AppView>('play');
   const [activeGame, setActiveGame] = useState<GameType>('sudoku');
   const [sudokuLevel, setSudokuLevel] = useState(1);
   const [authState, setAuthState] = useState<AuthState>(initialAuthState);
@@ -190,112 +193,178 @@ function App() {
         </nav>
       </header>
 
-      <motion.section
-        className="workspace social-workspace"
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: 'easeOut' }}
-      >
-        <section className="play-area" aria-label="Juego diario">
-          {canPlay ? (
-            <>
-              <div className="control-bar">
-                <GameTabs activeGame={activeGame} onChange={setActiveGame} />
-                {selectedGroup ? (
-                  <div className="active-group-banner">
-                    <span>Grupo activo</span>
-                    <strong>{selectedGroup.name}</strong>
-                  </div>
-                ) : (
-                  <div className="active-group-banner">
-                    <span>Resultados</span>
-                    <strong>Personales</strong>
-                  </div>
-                )}
-              </div>
+      <nav className="section-tabs" aria-label="Secciones principales">
+        <button
+          className={activeView === 'play' ? 'section-tab active' : 'section-tab'}
+          type="button"
+          onClick={() => setActiveView('play')}
+        >
+          <Gamepad2 size={18} />
+          <span>Jugar</span>
+        </button>
+        <button
+          className={activeView === 'groups' ? 'section-tab active' : 'section-tab'}
+          type="button"
+          onClick={() => setActiveView('groups')}
+        >
+          <UsersRound size={18} />
+          <span>Grupos</span>
+        </button>
+      </nav>
 
-              {activeGame === 'sudoku' ? <LevelSelector level={sudokuLevel} onChange={setSudokuLevel} /> : null}
+      {activeView === 'play' ? (
+        <motion.section
+          className="workspace social-workspace"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
+        >
+          <section className="play-area" aria-label="Juego diario">
+            {canPlay ? (
+              <>
+                <div className="control-bar">
+                  <GameTabs activeGame={activeGame} onChange={setActiveGame} />
+                  {selectedGroup ? (
+                    <div className="active-group-banner">
+                      <span>Grupo activo</span>
+                      <strong>{selectedGroup.name}</strong>
+                    </div>
+                  ) : (
+                    <div className="active-group-banner">
+                      <span>Resultados</span>
+                      <strong>Personales</strong>
+                    </div>
+                  )}
+                </div>
 
-              {activeGame === 'sudoku' ? (
-                <SudokuGame
-                  dateKey={dateKey}
-                  level={sudokuLevel}
-                  userId={userId}
-                  groupId={selectedGroupId}
-                  playerName={effectivePlayerName}
-                  onResultSaved={handleResultSaved}
-                  onStateChange={setCurrentChallenge}
-                />
-              ) : null}
+                {activeGame === 'sudoku' ? <LevelSelector level={sudokuLevel} onChange={setSudokuLevel} /> : null}
 
-              {activeGame === 'numbers' ? (
-                <NumbersGame
-                  dateKey={dateKey}
-                  userId={userId}
-                  groupId={selectedGroupId}
-                  playerName={effectivePlayerName}
-                  onResultSaved={handleResultSaved}
-                  onStateChange={setCurrentChallenge}
-                />
-              ) : null}
+                {activeGame === 'sudoku' ? (
+                  <SudokuGame
+                    dateKey={dateKey}
+                    level={sudokuLevel}
+                    userId={userId}
+                    groupId={selectedGroupId}
+                    playerName={effectivePlayerName}
+                    onResultSaved={handleResultSaved}
+                    onStateChange={setCurrentChallenge}
+                  />
+                ) : null}
 
-              {activeGame === 'letters' ? (
-                <LettersGame
-                  dateKey={dateKey}
-                  userId={userId}
-                  groupId={selectedGroupId}
-                  playerName={effectivePlayerName}
-                  onResultSaved={handleResultSaved}
-                  onStateChange={setCurrentChallenge}
-                />
-              ) : null}
-            </>
-          ) : (
-            <section className="locked-play" aria-label="Juego bloqueado">
-              <LockKeyhole size={32} aria-hidden="true" />
+                {activeGame === 'numbers' ? (
+                  <NumbersGame
+                    dateKey={dateKey}
+                    userId={userId}
+                    groupId={selectedGroupId}
+                    playerName={effectivePlayerName}
+                    onResultSaved={handleResultSaved}
+                    onStateChange={setCurrentChallenge}
+                  />
+                ) : null}
+
+                {activeGame === 'letters' ? (
+                  <LettersGame
+                    dateKey={dateKey}
+                    userId={userId}
+                    groupId={selectedGroupId}
+                    playerName={effectivePlayerName}
+                    onResultSaved={handleResultSaved}
+                    onStateChange={setCurrentChallenge}
+                  />
+                ) : null}
+              </>
+            ) : (
+              <section className="locked-play" aria-label="Juego bloqueado">
+                <LockKeyhole size={32} aria-hidden="true" />
+                <div>
+                  <p className="eyebrow">Acceso privado</p>
+                  <h2>Autentícate para jugar</h2>
+                  <p>Entra con tu email para desbloquear los retos diarios y guardar tus resultados.</p>
+                </div>
+              </section>
+            )}
+          </section>
+
+          <aside className="social-rail" aria-label="Cuenta y clasificación">
+            <AuthPanel
+              authState={authState}
+              onSendLoginCode={sendLoginCode}
+              onLogout={() => {
+                void logout().then(refreshAuth);
+              }}
+            />
+            {statusMessage ? <p className="service-message">{statusMessage}</p> : null}
+            <DailyLeaderboard
+              activeGame={activeGame}
+              dateKey={dateKey}
+              sudokuLevel={sudokuLevel}
+              groupId={selectedGroupId}
+              groupName={selectedGroup?.name ?? null}
+              refreshToken={refreshToken}
+            />
+          </aside>
+        </motion.section>
+      ) : (
+        <motion.section
+          className="group-dashboard"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
+        >
+          <section className="groups-column" aria-label="Listado de grupos">
+            <AuthPanel
+              authState={authState}
+              onSendLoginCode={sendLoginCode}
+              onLogout={() => {
+                void logout().then(refreshAuth);
+              }}
+            />
+            <GroupsPanel
+              profile={authenticatedProfile}
+              groups={groups}
+              selectedGroupId={selectedGroupId}
+              onSelectGroup={setSelectedGroupId}
+              onCreateGroup={handleCreateGroup}
+              onJoinGroup={handleJoinGroup}
+            />
+            {statusMessage ? <p className="service-message">{statusMessage}</p> : null}
+          </section>
+
+          <section className="group-detail" aria-label="Detalle del grupo">
+            <section className="social-card group-score-controls" aria-label="Filtro de puntuaciones de grupo">
               <div>
-                <p className="eyebrow">Acceso privado</p>
-                <h2>Autentícate para jugar</h2>
-                <p>Entra con tu email para desbloquear los retos diarios y guardar tus resultados.</p>
+                <p className="eyebrow">Puntuaciones del día</p>
+                <h2>{selectedGroup ? selectedGroup.name : 'Elige un grupo'}</h2>
               </div>
+              <GameTabs activeGame={activeGame} onChange={setActiveGame} />
+              {activeGame === 'sudoku' ? <LevelSelector level={sudokuLevel} onChange={setSudokuLevel} /> : null}
             </section>
-          )}
-        </section>
-
-        <aside className="social-rail" aria-label="Social y clasificación">
-          <AuthPanel
-            authState={authState}
-            onSendLoginCode={sendLoginCode}
-            onLogout={() => {
-              void logout().then(refreshAuth);
-            }}
-          />
-          <GroupsPanel
-            profile={authenticatedProfile}
-            groups={groups}
-            selectedGroupId={selectedGroupId}
-            onSelectGroup={setSelectedGroupId}
-            onCreateGroup={handleCreateGroup}
-            onJoinGroup={handleJoinGroup}
-          />
-          {statusMessage ? <p className="service-message">{statusMessage}</p> : null}
-          <DailyLeaderboard
-            activeGame={activeGame}
-            dateKey={dateKey}
-            sudokuLevel={sudokuLevel}
-            groupId={selectedGroupId}
-            groupName={selectedGroup?.name ?? null}
-            refreshToken={refreshToken}
-          />
-          <GroupChat
-            profile={authenticatedProfile}
-            group={selectedGroup}
-            messages={messages}
-            onSendMessage={handleSendMessage}
-            onRefresh={refreshMessages}
-          />
-        </aside>
-      </motion.section>
+            {selectedGroup ? (
+              <DailyLeaderboard
+                activeGame={activeGame}
+                dateKey={dateKey}
+                sudokuLevel={sudokuLevel}
+                groupId={selectedGroupId}
+                groupName={selectedGroup.name}
+                refreshToken={refreshToken}
+              />
+            ) : (
+              <section className="social-card empty-group-state" aria-label="Puntuaciones de grupo">
+                <p className="eyebrow">Clasificación</p>
+                <h2>Sin grupo seleccionado</h2>
+                <p>Selecciona o crea un grupo para ver las puntuaciones de ese día.</p>
+              </section>
+            )}
+            <GroupChat
+              profile={authenticatedProfile}
+              group={selectedGroup}
+              messages={messages}
+              onSendMessage={handleSendMessage}
+              onRefresh={refreshMessages}
+            />
+          </section>
+        </motion.section>
+      )}
     </main>
   );
 }
