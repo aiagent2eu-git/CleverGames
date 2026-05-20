@@ -115,10 +115,11 @@ function App() {
         setStatusMessage(`Grupo creado. Código: ${result.data.inviteCode}`);
         setGroups((current) => [result.data!, ...current.filter((group) => group.id !== result.data!.id)]);
         setSelectedGroupId(result.data.id);
-        await refreshGroups();
+        setMessages([]);
+        setRefreshToken((value) => value + 1);
       }
     },
-    [authenticatedProfile, refreshGroups],
+    [authenticatedProfile],
   );
 
   const handleJoinGroup = useCallback(
@@ -133,10 +134,11 @@ function App() {
         setStatusMessage(`Te has unido a ${result.data.name}.`);
         setGroups((current) => [result.data!, ...current.filter((group) => group.id !== result.data!.id)]);
         setSelectedGroupId(result.data.id);
-        await refreshGroups();
+        setMessages([]);
+        setRefreshToken((value) => value + 1);
       }
     },
-    [authenticatedProfile, refreshGroups],
+    [authenticatedProfile],
   );
 
   const handleSendMessage = useCallback(
