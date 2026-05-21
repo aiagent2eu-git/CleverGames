@@ -17,7 +17,7 @@ export function GroupChat({ profile, group, messages, onSendMessage, onRefresh }
     <section className="social-card group-chat" aria-label="Chat del grupo">
       <div className="panel-heading compact">
         <div>
-          <p className="eyebrow">Chat</p>
+          <p className="eyebrow">Chat único</p>
           <h2>{group ? group.name : 'Sin grupo'}</h2>
         </div>
         <button className="icon-button icon-only" type="button" onClick={onRefresh} aria-label="Actualizar chat">

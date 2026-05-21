@@ -4,7 +4,7 @@ import {
   type DailyResultRow,
   type DailyResultRowInsert,
 } from '../lib/supabaseHandler';
-import type { DailyResult, DailyResultSubmission, GameType } from '../game/types';
+import type { DailyResult, DailyResultSubmission, GameType, JsonValue } from '../game/types';
 
 const LOCAL_STORAGE_KEY = 'clevergames.dailyResults';
 
@@ -18,6 +18,21 @@ export type DailyResultFilter = {
 type DailyResultServiceResult<T> = {
   data: T;
   error: { message: string } | null;
+};
+
+type CleanDailyResultSubmission = {
+  userId: string | null;
+  groupId: string | null;
+  groupIds: string[];
+  playerName: string;
+  challengeDate: string;
+  gameType: GameType;
+  difficulty: number | null;
+  score: number;
+  durationMs: number;
+  operationsCount: number | null;
+  wordLength: number | null;
+  metadata: Record<string, JsonValue>;
 };
 
 export async function getDailyResults(
@@ -46,41 +61,28 @@ export async function submitDailyResult(
     return { data: null, error: cleaned.error };
   }
 
-  const row: DailyResultRowInsert = {
-    user_id: cleaned.userId,
-    group_id: cleaned.groupId,
-    player_name: cleaned.playerName,
-    challenge_date: cleaned.challengeDate,
-    game_type: cleaned.gameType,
-    difficulty: cleaned.difficulty ?? null,
-    score: cleaned.score,
-    duration_ms: cleaned.durationMs,
-    operations_count: cleaned.operationsCount,
-    word_length: cleaned.wordLength,
-    metadata: cleaned.metadata ?? {},
-  };
+  const targetGroupIds = getTargetGroupIds(cleaned);
+  const resultTargets = [null, ...targetGroupIds];
+  const savedResults: DailyResult[] = [];
 
-  const result = await insertDailyResultRow(row);
-  if (result.error || !result.data) {
-    return {
-      data: saveLocalResult(cleaned),
-      error: null,
-    };
+  for (const groupId of resultTargets) {
+    const result = await insertDailyResultRow(toRow(cleaned, groupId));
+
+    if (result.error || !result.data) {
+      savedResults.push(saveLocalResult({ ...cleaned, groupId }));
+    } else {
+      savedResults.push(fromRow(result.data));
+    }
   }
 
   return {
-    data: fromRow(result.data),
+    data: savedResults[0] ?? null,
     error: null,
   };
 }
 
 function validateSubmission(submission: DailyResultSubmission):
-  | (Required<DailyResultSubmission> & {
-      userId: string | null;
-      groupId: string | null;
-      operationsCount: number | null;
-      wordLength: number | null;
-    })
+  | CleanDailyResultSubmission
   | {
       error: { message: string };
     } {
@@ -96,6 +98,7 @@ function validateSubmission(submission: DailyResultSubmission):
   return {
     userId: submission.userId ?? null,
     groupId: submission.groupId ?? null,
+    groupIds: normalizeGroupIds(submission.groupIds),
     playerName,
     challengeDate: submission.challengeDate,
     gameType: submission.gameType,
@@ -105,6 +108,30 @@ function validateSubmission(submission: DailyResultSubmission):
     operationsCount: submission.operationsCount ?? null,
     wordLength: submission.wordLength ?? null,
     metadata: submission.metadata ?? {},
+  };
+}
+
+function normalizeGroupIds(groupIds: string[] | undefined) {
+  return [...new Set((groupIds ?? []).map((groupId) => groupId.trim()).filter(Boolean))];
+}
+
+function getTargetGroupIds(submission: CleanDailyResultSubmission) {
+  return submission.groupIds.length > 0 ? submission.groupIds : normalizeGroupIds([submission.groupId ?? '']);
+}
+
+function toRow(submission: CleanDailyResultSubmission, groupId: string | null): DailyResultRowInsert {
+  return {
+    user_id: submission.userId,
+    group_id: groupId,
+    player_name: submission.playerName,
+    challenge_date: submission.challengeDate,
+    game_type: submission.gameType,
+    difficulty: submission.difficulty,
+    score: submission.score,
+    duration_ms: submission.durationMs,
+    operations_count: submission.operationsCount,
+    word_length: submission.wordLength,
+    metadata: submission.metadata,
   };
 }
 
@@ -132,15 +159,11 @@ function getLocalResults(filter: DailyResultFilter) {
 }
 
 function saveLocalResult(
-  submission: Required<DailyResultSubmission> & {
-    userId: string | null;
-    groupId: string | null;
-    operationsCount: number | null;
-    wordLength: number | null;
-  },
+  submission: CleanDailyResultSubmission & { groupId: string | null },
 ) {
+  const scope = submission.groupId ?? 'personal';
   const result: DailyResult = {
-    id: `local-${Date.now()}`,
+    id: `local-${Date.now()}-${scope}-${Math.random().toString(36).slice(2, 8)}`,
     userId: submission.userId,
     groupId: submission.groupId,
     playerName: submission.playerName,

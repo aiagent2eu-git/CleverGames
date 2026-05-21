@@ -8,7 +8,7 @@ type SudokuGameProps = {
   dateKey: string;
   level: number;
   userId: string | null;
-  groupId: string | null;
+  groupIds: string[];
   playerName: string;
   onResultSaved: () => void;
   onStateChange: (state: AppTextState['currentChallenge']) => void;
@@ -18,7 +18,7 @@ export function SudokuGame({
   dateKey,
   level,
   userId,
-  groupId,
+  groupIds,
   playerName,
   onResultSaved,
   onStateChange,
@@ -103,7 +103,7 @@ export function SudokuGame({
     const score = level * 1000 + puzzle.emptyCells * 20 + speedBonus;
     const result = await submitDailyResult({
       userId,
-      groupId,
+      groupIds,
       playerName,
       challengeDate: dateKey,
       gameType: 'sudoku',

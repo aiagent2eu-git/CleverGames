@@ -13,13 +13,13 @@ import type { AppTextState } from '../game/types';
 type NumbersGameProps = {
   dateKey: string;
   userId: string | null;
-  groupId: string | null;
+  groupIds: string[];
   playerName: string;
   onResultSaved: () => void;
   onStateChange: (state: AppTextState['currentChallenge']) => void;
 };
 
-export function NumbersGame({ dateKey, userId, groupId, playerName, onResultSaved, onStateChange }: NumbersGameProps) {
+export function NumbersGame({ dateKey, userId, groupIds, playerName, onResultSaved, onStateChange }: NumbersGameProps) {
   const challenge = useMemo(() => generateNumbersChallenge(dateKey), [dateKey]);
   const [expression, setExpression] = useState('');
   const [startedAt, setStartedAt] = useState(() => Date.now());
@@ -58,7 +58,7 @@ export function NumbersGame({ dateKey, userId, groupId, playerName, onResultSave
     const operationsCount = countExpressionOperations(expression);
     const response = await submitDailyResult({
       userId,
-      groupId,
+      groupIds,
       playerName,
       challengeDate: dateKey,
       gameType: 'numbers',

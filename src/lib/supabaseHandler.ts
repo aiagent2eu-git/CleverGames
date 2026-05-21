@@ -351,6 +351,22 @@ export async function joinGroupByInviteCode(inviteCode: string): Promise<Service
   return { data: data ?? null, error };
 }
 
+export async function leaveGroupRow(groupId: string, userId: string): Promise<ServiceResult<null>> {
+  const client = getSupabaseClient();
+  if (!client) return { data: null, error: { message: 'Supabase is not configured.' } };
+
+  const { error } = await client.from('group_members').delete().eq('group_id', groupId).eq('user_id', userId);
+  return { data: null, error };
+}
+
+export async function deleteGroupRow(groupId: string): Promise<ServiceResult<null>> {
+  const client = getSupabaseClient();
+  if (!client) return { data: null, error: { message: 'Supabase is not configured.' } };
+
+  const { error } = await client.from('groups').delete().eq('id', groupId);
+  return { data: null, error };
+}
+
 export async function fetchGroupMessageRows(groupId: string): Promise<ServiceResult<GroupMessageRow[]>> {
   const client = getSupabaseClient();
   if (!client) return { data: [], error: { message: 'Supabase is not configured.' } };

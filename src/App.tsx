@@ -20,7 +20,15 @@ import {
   sendLoginCode,
   type AuthState,
 } from './services/authService';
-import { createGroup, getGroupMessages, getGroupsForProfile, joinGroup, sendGroupMessage } from './services/groupService';
+import {
+  createGroup,
+  deleteGroup,
+  getGroupMessages,
+  getGroupsForProfile,
+  joinGroup,
+  leaveGroup,
+  sendGroupMessage,
+} from './services/groupService';
 
 type AppView = 'play' | 'groups';
 
@@ -74,6 +82,7 @@ function App() {
     () => groups.find((group) => group.id === selectedGroupId) ?? null,
     [groups, selectedGroupId],
   );
+  const resultGroupIds = useMemo(() => groups.map((group) => group.id), [groups]);
   const authenticatedProfile = authState.isDemo ? null : authState.profile;
   const authenticatedProfileId = authenticatedProfile?.id ?? null;
 
@@ -147,9 +156,15 @@ function App() {
 
   const handleResultSaved = useCallback(() => {
     localStorage.setItem('clevergames.playerName', playerName.trim());
-    setStatusMessage(selectedGroup ? `Resultado guardado en ${selectedGroup.name}.` : 'Resultado guardado.');
+    setStatusMessage(
+      resultGroupIds.length > 0
+        ? `Resultado guardado y compartido en ${resultGroupIds.length} ${
+            resultGroupIds.length === 1 ? 'grupo' : 'grupos'
+          }.`
+        : 'Resultado guardado.',
+    );
     setRefreshToken((value) => value + 1);
-  }, [playerName, selectedGroup]);
+  }, [playerName, resultGroupIds.length]);
 
   const handleCreateGroup = useCallback(
     async (name: string, description: string) => {
@@ -189,6 +204,48 @@ function App() {
     [authenticatedProfile, selectGroup],
   );
 
+  const removeGroupFromView = useCallback(
+    (group: CompetitionGroup) => {
+      setGroups((current) => current.filter((item) => item.id !== group.id));
+      if (selectedGroupId === group.id) {
+        selectGroup(null);
+        setMessages([]);
+      }
+      setRefreshToken((value) => value + 1);
+    },
+    [selectGroup, selectedGroupId],
+  );
+
+  const handleLeaveGroup = useCallback(
+    async (group: CompetitionGroup) => {
+      if (!authenticatedProfile) return;
+      const result = await leaveGroup(authenticatedProfile, group);
+      if (result.error) {
+        setStatusMessage(result.error.message);
+        return;
+      }
+
+      removeGroupFromView(group);
+      setStatusMessage(`Has abandonado ${group.name}.`);
+    },
+    [authenticatedProfile, removeGroupFromView],
+  );
+
+  const handleDeleteGroup = useCallback(
+    async (group: CompetitionGroup) => {
+      if (!authenticatedProfile) return;
+      const result = await deleteGroup(authenticatedProfile, group);
+      if (result.error) {
+        setStatusMessage(result.error.message);
+        return;
+      }
+
+      removeGroupFromView(group);
+      setStatusMessage(`Grupo eliminado: ${group.name}.`);
+    },
+    [authenticatedProfile, removeGroupFromView],
+  );
+
   const handleSendMessage = useCallback(
     async (body: string) => {
       if (!authenticatedProfile || !selectedGroupId) return;
@@ -224,6 +281,8 @@ function App() {
   const effectivePlayerName = playerName.trim() || authenticatedProfile?.displayName || 'Player';
   const selectedGameLabel = activeGame === 'sudoku' ? `${gameLabels[activeGame]} nivel ${sudokuLevel}` : gameLabels[activeGame];
   const selectedGroupRole = selectedGroup?.role ? groupRoleLabels[selectedGroup.role] : 'Miembro';
+  const shareTargetName =
+    resultGroupIds.length === 0 ? 'Personales' : resultGroupIds.length === 1 ? groups[0].name : `${resultGroupIds.length} grupos`;
 
   return (
     <main className="app-shell">
@@ -271,17 +330,10 @@ function App() {
               <>
                 <div className="control-bar">
                   <GameTabs activeGame={activeGame} onChange={setActiveGame} />
-                  {selectedGroup ? (
-                    <div className="active-group-banner">
-                      <span>Grupo activo</span>
-                      <strong>{selectedGroup.name}</strong>
-                    </div>
-                  ) : (
-                    <div className="active-group-banner">
-                      <span>Resultados</span>
-                      <strong>Personales</strong>
-                    </div>
-                  )}
+                  <div className="active-group-banner">
+                    <span>{resultGroupIds.length > 0 ? 'Compartiendo' : 'Resultados'}</span>
+                    <strong>{shareTargetName}</strong>
+                  </div>
                 </div>
 
                 {activeGame === 'sudoku' ? <LevelSelector level={sudokuLevel} onChange={setSudokuLevel} /> : null}
@@ -291,7 +343,7 @@ function App() {
                     dateKey={dateKey}
                     level={sudokuLevel}
                     userId={userId}
-                    groupId={selectedGroupId}
+                    groupIds={resultGroupIds}
                     playerName={effectivePlayerName}
                     onResultSaved={handleResultSaved}
                     onStateChange={setCurrentChallenge}
@@ -302,7 +354,7 @@ function App() {
                   <NumbersGame
                     dateKey={dateKey}
                     userId={userId}
-                    groupId={selectedGroupId}
+                    groupIds={resultGroupIds}
                     playerName={effectivePlayerName}
                     onResultSaved={handleResultSaved}
                     onStateChange={setCurrentChallenge}
@@ -313,7 +365,7 @@ function App() {
                   <LettersGame
                     dateKey={dateKey}
                     userId={userId}
-                    groupId={selectedGroupId}
+                    groupIds={resultGroupIds}
                     playerName={effectivePlayerName}
                     onResultSaved={handleResultSaved}
                     onStateChange={setCurrentChallenge}
@@ -373,6 +425,8 @@ function App() {
               onSelectGroup={selectGroup}
               onCreateGroup={handleCreateGroup}
               onJoinGroup={handleJoinGroup}
+              onLeaveGroup={handleLeaveGroup}
+              onDeleteGroup={handleDeleteGroup}
             />
             {statusMessage ? <p className="service-message">{statusMessage}</p> : null}
           </section>
@@ -385,7 +439,7 @@ function App() {
                   <h2>{selectedGroup ? selectedGroup.name : 'Elige un grupo'}</h2>
                   <p>
                     {selectedGroup
-                      ? selectedGroup.description || 'Chat, puntuaciones diarias y retos compartidos para el grupo.'
+                      ? selectedGroup.description || 'Chat único, puntuaciones diarias y retos compartidos para este grupo.'
                       : 'Selecciona un grupo de la izquierda para abrir su chat y su clasificación diaria.'}
                   </p>
                 </div>

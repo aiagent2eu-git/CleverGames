@@ -47,6 +47,7 @@ export type DailyResult = {
 export type DailyResultSubmission = {
   userId?: string | null;
   groupId?: string | null;
+  groupIds?: string[];
   playerName: string;
   challengeDate: string;
   gameType: GameType;

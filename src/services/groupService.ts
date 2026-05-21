@@ -1,10 +1,12 @@
 import {
   createGroupRow,
+  deleteGroupRow,
   fetchGroupMessageRows,
   fetchGroupRowsForUser,
   insertGroupMessageRow,
   isSupabaseConfigured,
   joinGroupByInviteCode,
+  leaveGroupRow,
 } from '../lib/supabaseHandler';
 import type { CompetitionGroup, GroupMessage, UserProfile } from '../game/types';
 
@@ -132,6 +134,48 @@ export async function joinGroup(
   return { data: group, error: null };
 }
 
+export async function leaveGroup(
+  profile: UserProfile,
+  group: CompetitionGroup,
+): Promise<GroupServiceResult<CompetitionGroup | null>> {
+  if (group.role === 'owner' || group.ownerId === profile.id) {
+    return { data: null, error: { message: 'El creador puede eliminar el grupo, no abandonarlo.' } };
+  }
+
+  if (!isSupabaseConfigured || profile.id === 'local-user' || group.id.startsWith('local-')) {
+    removeLocalGroup(group.id);
+    removeCachedGroup(profile.id, group.id);
+    return { data: group, error: null };
+  }
+
+  const result = await leaveGroupRow(group.id, profile.id);
+  if (result.error) return { data: null, error: result.error };
+
+  removeCachedGroup(profile.id, group.id);
+  return { data: group, error: null };
+}
+
+export async function deleteGroup(
+  profile: UserProfile,
+  group: CompetitionGroup,
+): Promise<GroupServiceResult<CompetitionGroup | null>> {
+  if (group.role !== 'owner' && group.ownerId !== profile.id) {
+    return { data: null, error: { message: 'Solo el creador puede eliminar el grupo.' } };
+  }
+
+  if (!isSupabaseConfigured || profile.id === 'local-user' || group.id.startsWith('local-')) {
+    removeLocalGroup(group.id);
+    removeCachedGroup(profile.id, group.id);
+    return { data: group, error: null };
+  }
+
+  const result = await deleteGroupRow(group.id);
+  if (result.error) return { data: null, error: result.error };
+
+  removeCachedGroup(profile.id, group.id);
+  return { data: group, error: null };
+}
+
 export async function getGroupMessages(groupId: string | null): Promise<GroupServiceResult<GroupMessage[]>> {
   if (!groupId) return { data: [], error: null };
 
@@ -229,6 +273,11 @@ function saveLocalGroup(name: string, description: string, profile: UserProfile)
   return group;
 }
 
+function removeLocalGroup(groupId: string) {
+  const groups = getLocalGroups().filter((group) => group.id !== groupId);
+  localStorage.setItem(LOCAL_GROUPS_KEY, JSON.stringify(groups));
+}
+
 function getGroupCacheKey(userId: string) {
   return `${GROUP_CACHE_KEY_PREFIX}${userId}`;
 }
@@ -252,6 +301,13 @@ function saveCachedGroups(userId: string, groups: CompetitionGroup[]) {
 
 function cacheGroup(userId: string, group: CompetitionGroup) {
   saveCachedGroups(userId, mergeGroups([group], getCachedGroups(userId)));
+}
+
+function removeCachedGroup(userId: string, groupId: string) {
+  saveCachedGroups(
+    userId,
+    getCachedGroups(userId).filter((group) => group.id !== groupId),
+  );
 }
 
 function mergeGroups(primary: CompetitionGroup[], secondary: CompetitionGroup[]) {

@@ -1,6 +1,6 @@
 # CleverGames
 
-Juego diario web con React/Vite: 10 sudokus diarios, una prueba diaria de Cifras y una prueba diaria de Letras. Los jugadores entran con email, crean grupos privados, compiten por resultados diarios y hablan en un chat del grupo.
+Juego diario web con React/Vite: 10 sudokus diarios, una prueba diaria de Cifras y una prueba diaria de Letras. Los jugadores entran con email, crean grupos privados, compiten por resultados diarios y hablan en un chat único por grupo.
 
 ## Stack
 
@@ -12,6 +12,7 @@ Juego diario web con React/Vite: 10 sudokus diarios, una prueba diaria de Cifras
 - Cifras con 6 números, objetivo y validación de expresión
 - Letras con 9 letras y diccionario local provisional
 - Grupos privados, chat y clasificaciones por grupo/día
+- Los resultados diarios se publican automáticamente en todos los grupos a los que pertenece el jugador
 
 ## Local setup
 
@@ -62,7 +63,7 @@ The full schema is in `sql/` so anyone can clone the repository and create their
 - `group_messages`: chat visible only to group members.
 - `daily_results`: daily game results, optionally attached to a group.
 
-RLS keeps group data private to members. Results and chat messages are immutable in the first version.
+RLS keeps group data private to members. Group creators can delete their groups; members can leave groups. Results and chat messages are immutable in the first version.
 
 ## Vercel setup
 
