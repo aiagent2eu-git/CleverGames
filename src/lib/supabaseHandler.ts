@@ -142,6 +142,20 @@ type Database = {
         Args: { target_invite_code: string };
         Returns: Database['public']['Tables']['groups']['Row'];
       };
+      list_my_groups: {
+        Args: Record<string, never>;
+        Returns: Array<{
+          id: string;
+          name: string;
+          description: string | null;
+          owner_id: string;
+          invite_code: string;
+          created_at: string;
+          updated_at: string;
+          role: 'owner' | 'admin' | 'member';
+          joined_at: string;
+        }>;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
@@ -276,11 +290,35 @@ export async function fetchGroupRowsForUser(userId: string): Promise<
   const client = getSupabaseClient();
   if (!client) return { data: [], error: { message: 'Supabase is not configured.' } };
 
+  const listedGroups = await client.rpc('list_my_groups');
+  if (!listedGroups.error) {
+    return {
+      data: (listedGroups.data ?? []).map((row) => ({
+        group: {
+          id: row.id,
+          name: row.name,
+          description: row.description,
+          owner_id: row.owner_id,
+          invite_code: row.invite_code,
+          created_at: row.created_at,
+          updated_at: row.updated_at,
+        },
+        membership: {
+          group_id: row.id,
+          user_id: userId,
+          role: row.role,
+          joined_at: row.joined_at,
+        },
+      })),
+      error: null,
+    };
+  }
+
   const memberships = await client.from('group_members').select('*').eq('user_id', userId);
   if (memberships.error) return { data: [], error: memberships.error };
 
   const groupIds = memberships.data.map((membership) => membership.group_id);
-  if (groupIds.length === 0) return { data: [], error: null };
+  if (groupIds.length === 0) return { data: [], error: listedGroups.error };
 
   const groups = await client.from('groups').select('*').in('id', groupIds).order('created_at', { ascending: true });
   if (groups.error) return { data: [], error: groups.error };

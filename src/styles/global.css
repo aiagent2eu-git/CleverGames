@@ -172,12 +172,15 @@ input:focus-visible {
 
 .group-score-controls {
   display: grid;
-  gap: 14px;
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
 }
 
 .group-score-controls h2 {
   margin: 0;
-  font-size: clamp(1.45rem, 2vw, 2.25rem);
+  font-size: clamp(2rem, 5vw, 4rem);
+  line-height: 0.95;
 }
 
 .group-score-controls .game-tabs {
@@ -186,6 +189,112 @@ input:focus-visible {
 
 .group-score-controls .level-selector {
   margin-bottom: 0;
+}
+
+.group-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: end;
+  min-height: 172px;
+  padding: clamp(18px, 3vw, 26px);
+  background: #fffdf8;
+  border-bottom: 1px solid #d8d0c1;
+}
+
+.group-hero.active {
+  background:
+    linear-gradient(135deg, rgba(255, 189, 84, 0.18) 0 1px, transparent 1px 14px),
+    linear-gradient(135deg, #172126 0%, #172126 66%, #20433a 100%);
+  color: #fffdf8;
+}
+
+.group-hero.active .eyebrow,
+.group-hero.active p {
+  color: rgba(255, 253, 248, 0.72);
+}
+
+.group-hero-copy {
+  min-width: 0;
+}
+
+.group-hero-copy p:last-child {
+  max-width: 560px;
+  margin: 10px 0 0;
+  color: #52605c;
+}
+
+.group-hero.active .group-hero-copy p:last-child {
+  color: rgba(255, 253, 248, 0.72);
+}
+
+.group-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  max-width: 280px;
+}
+
+.invite-chip,
+.role-chip,
+.live-scope {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  border-radius: 999px;
+  padding: 0 11px;
+  font-size: 0.84rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.invite-chip,
+.role-chip {
+  border: 1px solid rgba(255, 253, 248, 0.32);
+  background: rgba(255, 253, 248, 0.1);
+  color: #fffdf8;
+}
+
+.role-chip {
+  background: #ffbd54;
+  border-color: #ffbd54;
+  color: #172126;
+}
+
+.live-scope {
+  border: 1px solid #9bd5c2;
+  background: #e9f8f1;
+  color: #0c6f54;
+}
+
+.group-hero-empty {
+  display: grid;
+  width: 74px;
+  height: 74px;
+  place-items: center;
+  border: 1px solid #d8d0c1;
+  border-radius: 50%;
+  color: #65706b;
+}
+
+.group-controls-body {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.group-filter-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.group-filter-heading strong {
+  display: block;
+  font-size: 1.1rem;
 }
 
 .empty-group-state h2 {
@@ -481,6 +590,10 @@ input:focus-visible {
   text-transform: uppercase;
 }
 
+.field-label.compact {
+  margin: 0;
+}
+
 .tile-row {
   display: flex;
   flex-wrap: wrap;
@@ -647,18 +760,26 @@ input:focus-visible {
 .group-list {
   display: grid;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 14px;
 }
 
 .group-row {
   display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
   width: 100%;
   border: 1px solid #d2cabc;
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 10px;
   background: #fffdf8;
   color: #172126;
   text-align: left;
+}
+
+.group-row:hover {
+  border-color: #9fb5ae;
+  background: #f8fbf6;
 }
 
 .group-row.active {
@@ -667,10 +788,65 @@ input:focus-visible {
   color: #fffdf8;
 }
 
+.group-avatar {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid rgba(23, 33, 38, 0.16);
+  border-radius: 50%;
+  background: #d7f2e8;
+  color: #0c6f54;
+  font-weight: 920;
+}
+
+.group-avatar.personal {
+  background: #f4ecdc;
+  color: #52605c;
+}
+
+.group-row.active .group-avatar {
+  border-color: rgba(255, 253, 248, 0.28);
+  background: #ffbd54;
+  color: #172126;
+}
+
+.group-row-content {
+  display: grid;
+  min-width: 0;
+}
+
+.group-row-content strong,
+.group-row-content small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .group-row small {
   margin-top: 4px;
   color: inherit;
   opacity: 0.76;
+}
+
+.role-badge {
+  align-self: start;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 3px 7px;
+  font-size: 0.72rem;
+  font-weight: 850;
+  opacity: 0.78;
+  white-space: nowrap;
+}
+
+.group-form {
+  border-top: 1px solid #d8d0c1;
+  padding-top: 12px;
+}
+
+.join-form {
+  border-top-style: dashed;
 }
 
 .icon-button.icon-only {
@@ -845,6 +1021,25 @@ input:focus-visible {
     width: 100%;
   }
 
+  .group-hero,
+  .group-filter-heading {
+    grid-template-columns: 1fr;
+  }
+
+  .group-hero {
+    align-items: start;
+  }
+
+  .group-hero-meta {
+    justify-content: flex-start;
+    max-width: none;
+  }
+
+  .group-filter-heading {
+    display: grid;
+    align-items: start;
+  }
+
   .player-field {
     width: 100%;
   }
@@ -900,5 +1095,16 @@ input:focus-visible {
 
   .chat-list {
     max-height: 260px;
+  }
+}
+
+@media (max-width: 460px) {
+  .group-row {
+    grid-template-columns: 42px minmax(0, 1fr);
+  }
+
+  .role-badge {
+    grid-column: 2;
+    justify-self: start;
   }
 }

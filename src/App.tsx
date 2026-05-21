@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CalendarDays, Gamepad2, LockKeyhole, UsersRound } from 'lucide-react';
+import { CalendarDays, Gamepad2, Hash, LockKeyhole, Trophy, UsersRound } from 'lucide-react';
 import { AuthPanel } from './components/AuthPanel';
 import { DailyLeaderboard } from './components/DailyLeaderboard';
 import { GameTabs } from './components/GameTabs';
@@ -23,6 +23,24 @@ import {
 import { createGroup, getGroupMessages, getGroupsForProfile, joinGroup, sendGroupMessage } from './services/groupService';
 
 type AppView = 'play' | 'groups';
+
+const SELECTED_GROUP_KEY_PREFIX = 'clevergames.selectedGroupId.';
+
+const groupRoleLabels = {
+  owner: 'Creador',
+  admin: 'Admin',
+  member: 'Miembro',
+} as const;
+
+const gameLabels: Record<GameType, string> = {
+  sudoku: 'Sudoku',
+  numbers: 'Cifras',
+  letters: 'Letras',
+};
+
+function getSelectedGroupKey(profileId: string) {
+  return `${SELECTED_GROUP_KEY_PREFIX}${profileId}`;
+}
 
 declare global {
   interface Window {
@@ -57,6 +75,19 @@ function App() {
     [groups, selectedGroupId],
   );
   const authenticatedProfile = authState.isDemo ? null : authState.profile;
+  const authenticatedProfileId = authenticatedProfile?.id ?? null;
+
+  const selectGroup = useCallback(
+    (groupId: string | null) => {
+      setSelectedGroupId(groupId);
+      if (!authenticatedProfileId) return;
+
+      const key = getSelectedGroupKey(authenticatedProfileId);
+      if (groupId) localStorage.setItem(key, groupId);
+      else localStorage.removeItem(key);
+    },
+    [authenticatedProfileId],
+  );
 
   const refreshAuth = useCallback(async () => {
     const next = await getCurrentAuthState();
@@ -91,10 +122,24 @@ function App() {
   }, [refreshGroups]);
 
   useEffect(() => {
-    if (selectedGroupId && !groups.some((group) => group.id === selectedGroupId)) {
-      setSelectedGroupId(null);
+    if (selectedGroupId && groups.length > 0 && !groups.some((group) => group.id === selectedGroupId)) {
+      selectGroup(null);
     }
-  }, [groups, selectedGroupId]);
+  }, [groups, selectGroup, selectedGroupId]);
+
+  useEffect(() => {
+    if (!authenticatedProfileId) {
+      setSelectedGroupId(null);
+      return;
+    }
+
+    if (selectedGroupId || groups.length === 0) return;
+
+    const storedGroupId = localStorage.getItem(getSelectedGroupKey(authenticatedProfileId));
+    if (storedGroupId && groups.some((group) => group.id === storedGroupId)) {
+      setSelectedGroupId(storedGroupId);
+    }
+  }, [authenticatedProfileId, groups, selectedGroupId]);
 
   useEffect(() => {
     void refreshMessages();
@@ -117,12 +162,12 @@ function App() {
       if (result.data) {
         setStatusMessage(`Grupo creado. Código: ${result.data.inviteCode}`);
         setGroups((current) => [result.data!, ...current.filter((group) => group.id !== result.data!.id)]);
-        setSelectedGroupId(result.data.id);
+        selectGroup(result.data.id);
         setMessages([]);
         setRefreshToken((value) => value + 1);
       }
     },
-    [authenticatedProfile],
+    [authenticatedProfile, selectGroup],
   );
 
   const handleJoinGroup = useCallback(
@@ -136,12 +181,12 @@ function App() {
       if (result.data) {
         setStatusMessage(`Te has unido a ${result.data.name}.`);
         setGroups((current) => [result.data!, ...current.filter((group) => group.id !== result.data!.id)]);
-        setSelectedGroupId(result.data.id);
+        selectGroup(result.data.id);
         setMessages([]);
         setRefreshToken((value) => value + 1);
       }
     },
-    [authenticatedProfile],
+    [authenticatedProfile, selectGroup],
   );
 
   const handleSendMessage = useCallback(
@@ -177,6 +222,8 @@ function App() {
   const userId = authenticatedProfile?.id ?? null;
   const canPlay = Boolean(authenticatedProfile);
   const effectivePlayerName = playerName.trim() || authenticatedProfile?.displayName || 'Player';
+  const selectedGameLabel = activeGame === 'sudoku' ? `${gameLabels[activeGame]} nivel ${sudokuLevel}` : gameLabels[activeGame];
+  const selectedGroupRole = selectedGroup?.role ? groupRoleLabels[selectedGroup.role] : 'Miembro';
 
   return (
     <main className="app-shell">
@@ -323,7 +370,7 @@ function App() {
               profile={authenticatedProfile}
               groups={groups}
               selectedGroupId={selectedGroupId}
-              onSelectGroup={setSelectedGroupId}
+              onSelectGroup={selectGroup}
               onCreateGroup={handleCreateGroup}
               onJoinGroup={handleJoinGroup}
             />
@@ -332,12 +379,46 @@ function App() {
 
           <section className="group-detail" aria-label="Detalle del grupo">
             <section className="social-card group-score-controls" aria-label="Filtro de puntuaciones de grupo">
-              <div>
-                <p className="eyebrow">Puntuaciones del día</p>
-                <h2>{selectedGroup ? selectedGroup.name : 'Elige un grupo'}</h2>
+              <div className={selectedGroup ? 'group-hero active' : 'group-hero'}>
+                <div className="group-hero-copy">
+                  <p className="eyebrow">{selectedGroup ? 'Grupo activo' : 'Grupos'}</p>
+                  <h2>{selectedGroup ? selectedGroup.name : 'Elige un grupo'}</h2>
+                  <p>
+                    {selectedGroup
+                      ? selectedGroup.description || 'Chat, puntuaciones diarias y retos compartidos para el grupo.'
+                      : 'Selecciona un grupo de la izquierda para abrir su chat y su clasificación diaria.'}
+                  </p>
+                </div>
+                {selectedGroup ? (
+                  <div className="group-hero-meta" aria-label="Datos del grupo">
+                    <span className="invite-chip">
+                      <Hash size={16} aria-hidden="true" />
+                      {selectedGroup.inviteCode}
+                    </span>
+                    <span className="role-chip">{selectedGroupRole}</span>
+                  </div>
+                ) : (
+                  <div className="group-hero-empty" aria-hidden="true">
+                    <UsersRound size={38} />
+                  </div>
+                )}
               </div>
-              <GameTabs activeGame={activeGame} onChange={setActiveGame} />
-              {activeGame === 'sudoku' ? <LevelSelector level={sudokuLevel} onChange={setSudokuLevel} /> : null}
+              <div className="group-controls-body">
+                <div className="group-filter-heading">
+                  <div>
+                    <p className="eyebrow">Puntuaciones del día</p>
+                    <strong>{selectedGameLabel}</strong>
+                  </div>
+                  {selectedGroup ? (
+                    <span className="live-scope">
+                      <Trophy size={16} aria-hidden="true" />
+                      Competición privada
+                    </span>
+                  ) : null}
+                </div>
+                <GameTabs activeGame={activeGame} onChange={setActiveGame} />
+                {activeGame === 'sudoku' ? <LevelSelector level={sudokuLevel} onChange={setSudokuLevel} /> : null}
+              </div>
             </section>
             {selectedGroup ? (
               <DailyLeaderboard

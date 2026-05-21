@@ -10,6 +10,7 @@ import type { CompetitionGroup, GroupMessage, UserProfile } from '../game/types'
 
 const LOCAL_GROUPS_KEY = 'clevergames.localGroups';
 const LOCAL_MESSAGES_KEY = 'clevergames.localGroupMessages';
+const GROUP_CACHE_KEY_PREFIX = 'clevergames.groupCache.';
 
 type GroupServiceResult<T> = {
   data: T;
@@ -23,21 +24,36 @@ export async function getGroupsForProfile(profile: UserProfile | null): Promise<
     return { data: getLocalGroups(), error: null };
   }
 
+  const cachedGroups = getCachedGroups(profile.id);
   const result = await fetchGroupRowsForUser(profile.id);
-  if (result.error) return { data: getLocalGroups(), error: result.error };
+  if (result.error) return { data: cachedGroups, error: normalizeListGroupsError(result.error) };
+
+  const remoteGroups = result.data.map(({ group, membership }) => ({
+    id: group.id,
+    name: group.name,
+    description: group.description,
+    ownerId: group.owner_id,
+    inviteCode: group.invite_code,
+    createdAt: group.created_at,
+    role: membership.role,
+  }));
+  const groups = mergeGroups(remoteGroups, cachedGroups);
+  saveCachedGroups(profile.id, groups);
 
   return {
-    data: result.data.map(({ group, membership }) => ({
-      id: group.id,
-      name: group.name,
-      description: group.description,
-      ownerId: group.owner_id,
-      inviteCode: group.invite_code,
-      createdAt: group.created_at,
-      role: membership.role,
-    })),
+    data: groups,
     error: null,
   };
+}
+
+function normalizeListGroupsError(error: { message: string }) {
+  if (error.message.includes('Could not find the function public.list_my_groups')) {
+    return {
+      message: 'Falta actualizar Supabase. Ejecuta sql/20260521-005_list_my_groups_rpc.sql en el SQL Editor.',
+    };
+  }
+
+  return error;
 }
 
 export async function createGroup(
@@ -57,18 +73,18 @@ export async function createGroup(
     return { data: null, error: normalizeCreateGroupError(result.error) };
   }
 
-  return {
-    data: {
-      id: result.data.id,
-      name: result.data.name,
-      description: result.data.description,
-      ownerId: result.data.owner_id,
-      inviteCode: result.data.invite_code,
-      createdAt: result.data.created_at,
-      role: 'owner',
-    },
-    error: null,
+  const group: CompetitionGroup = {
+    id: result.data.id,
+    name: result.data.name,
+    description: result.data.description,
+    ownerId: result.data.owner_id,
+    inviteCode: result.data.invite_code,
+    createdAt: result.data.created_at,
+    role: 'owner',
   };
+  cacheGroup(profile.id, group);
+
+  return { data: group, error: null };
 }
 
 function normalizeCreateGroupError(error: { message: string } | null) {
@@ -102,18 +118,18 @@ export async function joinGroup(
     return { data: null, error: result.error ?? { message: 'No se pudo unir al grupo.' } };
   }
 
-  return {
-    data: {
-      id: result.data.id,
-      name: result.data.name,
-      description: result.data.description,
-      ownerId: result.data.owner_id,
-      inviteCode: result.data.invite_code,
-      createdAt: result.data.created_at,
-      role: 'member',
-    },
-    error: null,
+  const group: CompetitionGroup = {
+    id: result.data.id,
+    name: result.data.name,
+    description: result.data.description,
+    ownerId: result.data.owner_id,
+    inviteCode: result.data.invite_code,
+    createdAt: result.data.created_at,
+    role: 'member',
   };
+  cacheGroup(profile.id, group);
+
+  return { data: group, error: null };
 }
 
 export async function getGroupMessages(groupId: string | null): Promise<GroupServiceResult<GroupMessage[]>> {
@@ -211,6 +227,41 @@ function saveLocalGroup(name: string, description: string, profile: UserProfile)
   const groups = [group, ...getLocalGroups()];
   localStorage.setItem(LOCAL_GROUPS_KEY, JSON.stringify(groups));
   return group;
+}
+
+function getGroupCacheKey(userId: string) {
+  return `${GROUP_CACHE_KEY_PREFIX}${userId}`;
+}
+
+function getCachedGroups(userId: string) {
+  const key = getGroupCacheKey(userId);
+  const raw = localStorage.getItem(key);
+  if (!raw) return [];
+
+  try {
+    return JSON.parse(raw) as CompetitionGroup[];
+  } catch {
+    localStorage.removeItem(key);
+    return [];
+  }
+}
+
+function saveCachedGroups(userId: string, groups: CompetitionGroup[]) {
+  localStorage.setItem(getGroupCacheKey(userId), JSON.stringify(groups.slice(0, 50)));
+}
+
+function cacheGroup(userId: string, group: CompetitionGroup) {
+  saveCachedGroups(userId, mergeGroups([group], getCachedGroups(userId)));
+}
+
+function mergeGroups(primary: CompetitionGroup[], secondary: CompetitionGroup[]) {
+  const groupsById = new Map<string, CompetitionGroup>();
+
+  [...primary, ...secondary].forEach((group) => {
+    if (!groupsById.has(group.id)) groupsById.set(group.id, group);
+  });
+
+  return [...groupsById.values()].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
 }
 
 function getLocalMessages(groupId: string) {
