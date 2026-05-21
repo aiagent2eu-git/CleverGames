@@ -3,10 +3,10 @@ import {
   deleteGroupRow,
   fetchGroupMessageRows,
   fetchGroupRowsForUser,
-  insertGroupMessageRow,
   isSupabaseConfigured,
   joinGroupByInviteCode,
   leaveGroupRow,
+  sendGroupMessageRow,
 } from '../lib/supabaseHandler';
 import type { CompetitionGroup, GroupMessage, UserProfile } from '../game/types';
 
@@ -211,15 +211,10 @@ export async function sendGroupMessage(
     return { data: saveLocalMessage(profile, groupId, cleaned), error: null };
   }
 
-  const result = await insertGroupMessageRow({
-    group_id: groupId,
-    user_id: profile.id,
-    author_name: profile.displayName,
-    body: cleaned,
-  });
+  const result = await sendGroupMessageRow(groupId, profile.displayName, cleaned);
 
   if (result.error || !result.data) {
-    return { data: null, error: result.error ?? { message: 'No se pudo enviar el mensaje.' } };
+    return { data: null, error: normalizeSendMessageError(result.error) };
   }
 
   return {
@@ -233,6 +228,29 @@ export async function sendGroupMessage(
     },
     error: null,
   };
+}
+
+function normalizeSendMessageError(error: { message: string } | null) {
+  if (!error) return { message: 'No se pudo enviar el mensaje.' };
+
+  if (error.message.includes('Could not find the function public.send_group_message')) {
+    return {
+      message: 'Falta actualizar Supabase. Ejecuta sql/20260521-007_send_group_message_rpc.sql en el SQL Editor.',
+    };
+  }
+
+  if (error.message.includes('new row violates row-level security policy')) {
+    return {
+      message:
+        'Supabase ha bloqueado el chat por RLS. Ejecuta sql/20260521-006_fix_rls_helpers_plpgsql.sql y sql/20260521-007_send_group_message_rpc.sql.',
+    };
+  }
+
+  if (error.message.includes('not a member of this group')) {
+    return { message: 'No puedes escribir porque Supabase no te reconoce como miembro de este grupo.' };
+  }
+
+  return error;
 }
 
 function getLocalGroups() {

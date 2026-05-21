@@ -142,6 +142,10 @@ type Database = {
         Args: { target_invite_code: string };
         Returns: Database['public']['Tables']['groups']['Row'];
       };
+      send_group_message: {
+        Args: { target_group_id: string; message_body: string; message_author_name?: string | null };
+        Returns: Database['public']['Tables']['group_messages']['Row'];
+      };
       list_my_groups: {
         Args: Record<string, never>;
         Returns: Array<{
@@ -388,6 +392,22 @@ export async function insertGroupMessageRow(
   if (!client) return { data: null, error: { message: 'Supabase is not configured.' } };
 
   const { data, error } = await client.from('group_messages').insert(record).select().single();
+  return { data: data ?? null, error };
+}
+
+export async function sendGroupMessageRow(
+  groupId: string,
+  authorName: string,
+  body: string,
+): Promise<ServiceResult<GroupMessageRow | null>> {
+  const client = getSupabaseClient();
+  if (!client) return { data: null, error: { message: 'Supabase is not configured.' } };
+
+  const { data, error } = await client.rpc('send_group_message', {
+    target_group_id: groupId,
+    message_body: body,
+    message_author_name: authorName,
+  });
   return { data: data ?? null, error };
 }
 
