@@ -45,6 +45,7 @@ Supabase email links return to the current web origin. In local development that
    - `sql/20260521-005_list_my_groups_rpc.sql`
    - `sql/20260521-006_fix_rls_helpers_plpgsql.sql`
    - `sql/20260521-007_send_group_message_rpc.sql`
+   - `sql/20260521-008_group_chat_read_and_management_rpc.sql`
 2. Enable Email provider in Supabase Auth and use magic links for login.
 3. In Supabase Auth URL Configuration, set:
    - Site URL: `https://clever-games.vercel.app`

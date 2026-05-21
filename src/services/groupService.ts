@@ -148,8 +148,8 @@ export async function leaveGroup(
     return { data: group, error: null };
   }
 
-  const result = await leaveGroupRow(group.id, profile.id);
-  if (result.error) return { data: null, error: result.error };
+  const result = await leaveGroupRow(group.id);
+  if (result.error) return { data: null, error: normalizeGroupManagementError(result.error) };
 
   removeCachedGroup(profile.id, group.id);
   return { data: group, error: null };
@@ -170,7 +170,7 @@ export async function deleteGroup(
   }
 
   const result = await deleteGroupRow(group.id);
-  if (result.error) return { data: null, error: result.error };
+  if (result.error) return { data: null, error: normalizeGroupManagementError(result.error) };
 
   removeCachedGroup(profile.id, group.id);
   return { data: group, error: null };
@@ -184,7 +184,7 @@ export async function getGroupMessages(groupId: string | null): Promise<GroupSer
   }
 
   const result = await fetchGroupMessageRows(groupId);
-  if (result.error) return { data: [], error: result.error };
+  if (result.error) return { data: [], error: normalizeListMessagesError(result.error) };
 
   return {
     data: result.data.map((message) => ({
@@ -197,6 +197,45 @@ export async function getGroupMessages(groupId: string | null): Promise<GroupSer
     })),
     error: null,
   };
+}
+
+function normalizeListMessagesError(error: { message: string }) {
+  if (error.message.includes('Could not find the function public.list_group_messages')) {
+    return {
+      message: 'Falta actualizar Supabase. Ejecuta sql/20260521-008_group_chat_read_and_management_rpc.sql en el SQL Editor.',
+    };
+  }
+
+  if (error.message.includes('not a member of this group')) {
+    return { message: 'No puedes leer este chat porque Supabase no te reconoce como miembro del grupo.' };
+  }
+
+  return error;
+}
+
+function normalizeGroupManagementError(error: { message: string }) {
+  if (
+    error.message.includes('Could not find the function public.delete_group') ||
+    error.message.includes('Could not find the function public.leave_group')
+  ) {
+    return {
+      message: 'Falta actualizar Supabase. Ejecuta sql/20260521-008_group_chat_read_and_management_rpc.sql en el SQL Editor.',
+    };
+  }
+
+  if (error.message.includes('Only the group owner can delete this group')) {
+    return { message: 'Solo el creador puede eliminar este grupo.' };
+  }
+
+  if (error.message.includes('Group owner cannot leave the group')) {
+    return { message: 'El creador puede eliminar el grupo, no abandonarlo.' };
+  }
+
+  if (error.message.includes('not a member of this group')) {
+    return { message: 'Supabase no te reconoce como miembro de este grupo.' };
+  }
+
+  return error;
 }
 
 export async function sendGroupMessage(

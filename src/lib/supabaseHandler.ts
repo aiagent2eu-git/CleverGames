@@ -146,6 +146,18 @@ type Database = {
         Args: { target_group_id: string; message_body: string; message_author_name?: string | null };
         Returns: Database['public']['Tables']['group_messages']['Row'];
       };
+      list_group_messages: {
+        Args: { target_group_id: string; message_limit?: number };
+        Returns: Database['public']['Tables']['group_messages']['Row'][];
+      };
+      leave_group: {
+        Args: { target_group_id: string };
+        Returns: boolean;
+      };
+      delete_group: {
+        Args: { target_group_id: string };
+        Returns: boolean;
+      };
       list_my_groups: {
         Args: Record<string, never>;
         Returns: Array<{
@@ -355,11 +367,13 @@ export async function joinGroupByInviteCode(inviteCode: string): Promise<Service
   return { data: data ?? null, error };
 }
 
-export async function leaveGroupRow(groupId: string, userId: string): Promise<ServiceResult<null>> {
+export async function leaveGroupRow(groupId: string): Promise<ServiceResult<null>> {
   const client = getSupabaseClient();
   if (!client) return { data: null, error: { message: 'Supabase is not configured.' } };
 
-  const { error } = await client.from('group_members').delete().eq('group_id', groupId).eq('user_id', userId);
+  const { error } = await client.rpc('leave_group', {
+    target_group_id: groupId,
+  });
   return { data: null, error };
 }
 
@@ -367,7 +381,11 @@ export async function deleteGroupRow(groupId: string): Promise<ServiceResult<nul
   const client = getSupabaseClient();
   if (!client) return { data: null, error: { message: 'Supabase is not configured.' } };
 
-  const { error } = await client.from('groups').delete().eq('id', groupId);
+  const { error } = await client.rpc('delete_group', {
+    target_group_id: groupId,
+  });
+  if (error) return { data: null, error };
+
   return { data: null, error };
 }
 
@@ -375,12 +393,10 @@ export async function fetchGroupMessageRows(groupId: string): Promise<ServiceRes
   const client = getSupabaseClient();
   if (!client) return { data: [], error: { message: 'Supabase is not configured.' } };
 
-  const { data, error } = await client
-    .from('group_messages')
-    .select('*')
-    .eq('group_id', groupId)
-    .order('created_at', { ascending: true })
-    .limit(100);
+  const { data, error } = await client.rpc('list_group_messages', {
+    target_group_id: groupId,
+    message_limit: 100,
+  });
 
   return { data: data ?? [], error };
 }
