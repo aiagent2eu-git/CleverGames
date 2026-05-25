@@ -193,6 +193,7 @@ export type DailyResultRowFilter = {
   gameType: GameType;
   difficulty?: number | null;
   groupId?: string | null;
+  limit?: number;
 };
 
 export type ServiceError = Pick<PostgrestError, 'message'> | { message: string };
@@ -444,7 +445,7 @@ export async function fetchDailyResultRows(
     .order('duration_ms', { ascending: true })
     .order('operations_count', { ascending: true, nullsFirst: false })
     .order('word_length', { ascending: false, nullsFirst: false })
-    .limit(10);
+    .limit(filter.limit ?? 10);
 
   if (filter.difficulty !== undefined) {
     request =

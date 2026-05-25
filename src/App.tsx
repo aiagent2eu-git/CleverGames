@@ -5,6 +5,7 @@ import { AuthPanel } from './components/AuthPanel';
 import { DailyLeaderboard } from './components/DailyLeaderboard';
 import { GameTabs } from './components/GameTabs';
 import { GroupChat } from './components/GroupChat';
+import { GroupRankingsOverview } from './components/GroupRankingsOverview';
 import { GroupsPanel } from './components/GroupsPanel';
 import { LettersGame } from './components/LettersGame';
 import { LevelSelector } from './components/LevelSelector';
@@ -475,14 +476,22 @@ function App() {
               </div>
             </section>
             {selectedGroup ? (
-              <DailyLeaderboard
-                activeGame={activeGame}
-                dateKey={dateKey}
-                sudokuLevel={sudokuLevel}
-                groupId={selectedGroupId}
-                groupName={selectedGroup.name}
-                refreshToken={refreshToken}
-              />
+              <>
+                <GroupRankingsOverview
+                  dateKey={dateKey}
+                  groupId={selectedGroupId}
+                  groupName={selectedGroup.name}
+                  refreshToken={refreshToken}
+                />
+                <DailyLeaderboard
+                  activeGame={activeGame}
+                  dateKey={dateKey}
+                  sudokuLevel={sudokuLevel}
+                  groupId={selectedGroupId}
+                  groupName={selectedGroup.name}
+                  refreshToken={refreshToken}
+                />
+              </>
             ) : (
               <section className="social-card empty-group-state" aria-label="Puntuaciones de grupo">
                 <p className="eyebrow">Clasificación</p>

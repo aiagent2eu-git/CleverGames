@@ -13,6 +13,7 @@ export type DailyResultFilter = {
   gameType: GameType;
   difficulty?: number | null;
   groupId?: string | null;
+  limit?: number;
 };
 
 type DailyResultServiceResult<T> = {
@@ -155,7 +156,7 @@ function fromRow(row: DailyResultRow): DailyResult {
 
 function getLocalResults(filter: DailyResultFilter) {
   const allResults = readLocalResults();
-  return allResults.filter((result) => matchesFilter(result, filter)).sort(compareResults).slice(0, 10);
+  return allResults.filter((result) => matchesFilter(result, filter)).sort(compareResults).slice(0, filter.limit ?? 10);
 }
 
 function saveLocalResult(
