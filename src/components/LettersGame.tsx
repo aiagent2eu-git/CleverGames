@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Save } from 'lucide-react';
 import { evaluateLettersAttempt, generateLettersChallenge, type LettersAttemptResult } from '../game/letters';
 import { submitDailyResult } from '../services/dailyResultService';
+import { getFallbackLetterDictionary, loadLetterDictionary } from '../services/letterDictionaryService';
 import type { AppTextState } from '../game/types';
 
 type LettersGameProps = {
@@ -14,11 +15,23 @@ type LettersGameProps = {
 };
 
 export function LettersGame({ dateKey, userId, groupIds, playerName, onResultSaved, onStateChange }: LettersGameProps) {
-  const challenge = useMemo(() => generateLettersChallenge(dateKey), [dateKey]);
+  const [dictionaryWords, setDictionaryWords] = useState<string[]>(() => getFallbackLetterDictionary());
+  const challenge = useMemo(() => generateLettersChallenge(dateKey, dictionaryWords), [dateKey, dictionaryWords]);
   const [word, setWord] = useState('');
   const [startedAt, setStartedAt] = useState(() => Date.now());
   const [attempt, setAttempt] = useState<LettersAttemptResult | null>(null);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    void loadLetterDictionary().then((words) => {
+      if (mounted) setDictionaryWords(words);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     setWord('');
@@ -34,8 +47,9 @@ export function LettersGame({ dateKey, userId, groupIds, playerName, onResultSav
       word,
       attempt,
       bestWords: challenge.bestWords,
+      dictionarySize: challenge.dictionarySize,
     });
-  }, [attempt, challenge.bestWords, challenge.letters, onStateChange, word]);
+  }, [attempt, challenge.bestWords, challenge.dictionarySize, challenge.letters, onStateChange, word]);
 
   function evaluate() {
     const result = evaluateLettersAttempt(word, challenge);
@@ -122,7 +136,7 @@ export function LettersGame({ dateKey, userId, groupIds, playerName, onResultSav
       </p>
 
       <details className="solution-details">
-        <summary>Mejores palabras locales</summary>
+        <summary>Mejores palabras del diccionario</summary>
         <p>{challenge.bestWords.join(', ')}</p>
       </details>
     </section>

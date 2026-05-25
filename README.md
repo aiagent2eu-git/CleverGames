@@ -10,7 +10,7 @@ Juego diario web con React/Vite: 10 sudokus diarios, una prueba diaria de Cifras
 - Generación determinista por fecha local
 - Sudoku con 10 niveles diarios
 - Cifras con 6 números, objetivo y validación de expresión
-- Letras con 9 letras y diccionario local provisional
+- Letras con 9 letras y diccionario español abierto basado en Hunspell
 - Grupos privados, chat y clasificaciones por grupo/día
 - Los resultados diarios se publican automáticamente en todos los grupos a los que pertenece el jugador
 
@@ -46,6 +46,7 @@ Supabase email links return to the current web origin. In local development that
    - `sql/20260521-006_fix_rls_helpers_plpgsql.sql`
    - `sql/20260521-007_send_group_message_rpc.sql`
    - `sql/20260521-008_group_chat_read_and_management_rpc.sql`
+   - `sql/20260525-009_create_dictionary_words.sql`
 2. Enable Email provider in Supabase Auth and use magic links for login.
 3. In Supabase Auth URL Configuration, set:
    - Site URL: `https://clever-games.vercel.app`
@@ -56,6 +57,24 @@ Supabase email links return to the current web origin. In local development that
 
 Without Supabase credentials, results are saved locally in the browser.
 
+## Diccionario de Letras
+
+La prueba de Letras usa `dictionary-es`, un diccionario Hunspell español generado desde `sbosio/rla-es` y empaquetado por `wooorm/dictionaries`. La licencia del diccionario es `GPL-3.0 OR LGPL-3.0 OR MPL-1.1`.
+
+El juego carga `public/dictionaries/es-words.json`, generado con:
+
+```bash
+npm run dictionary:build
+```
+
+Para preparar un seed SQL importable en Supabase:
+
+```bash
+npm run dictionary:sql
+```
+
+Ese comando crea `output/dictionary_words.seed.sql`, que no se sube al repo. Antes de importarlo hay que ejecutar `sql/20260525-009_create_dictionary_words.sql`.
+
 ## Database model
 
 The full schema is in `sql/` so anyone can clone the repository and create their own database:
@@ -65,6 +84,7 @@ The full schema is in `sql/` so anyone can clone the repository and create their
 - `group_members`: group membership and roles.
 - `group_messages`: chat visible only to group members.
 - `daily_results`: daily game results, optionally attached to a group.
+- `dictionary_words`: optional Supabase table for the Spanish Letters dictionary.
 
 RLS keeps group data private to members. Group creators can delete their groups; members can leave groups. Results and chat messages are immutable in the first version.
 

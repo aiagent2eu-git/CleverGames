@@ -5,6 +5,8 @@ export type LettersChallenge = {
   dateKey: string;
   letters: string[];
   bestWords: string[];
+  dictionarySize: number;
+  wordSet: Set<string>;
 };
 
 export type LettersAttemptResult = {
@@ -16,11 +18,14 @@ export type LettersAttemptResult = {
 
 const VOWELS = 'AAEEEIIOOU';
 const CONSONANTS = 'BBCDDFGGHJKLMNNPQRSTTVVZ';
-const WORD_SET = new Set(SPANISH_WORDS.map(normalizeWord));
+const FALLBACK_WORDS = buildDictionaryWords(SPANISH_WORDS);
 
-export function generateLettersChallenge(dateKey: string): LettersChallenge {
+export function generateLettersChallenge(dateKey: string, dictionaryWords: readonly string[] = FALLBACK_WORDS): LettersChallenge {
   const rng = createRng(`letters:${dateKey}`);
-  const baseWord = normalizeWord(pick(DAILY_LETTER_WORDS, rng));
+  const words = buildDictionaryWords(dictionaryWords);
+  const wordSet = new Set(words);
+  const baseCandidates = words.filter((word) => word.length >= 5 && word.length <= 9);
+  const baseWord = normalizeWord(pick(baseCandidates.length > 0 ? baseCandidates : DAILY_LETTER_WORDS, rng));
   const letters = baseWord.split('');
 
   while (letters.length < 9) {
@@ -29,7 +34,7 @@ export function generateLettersChallenge(dateKey: string): LettersChallenge {
   }
 
   const shuffledLetters = shuffle(letters.slice(0, 9), rng);
-  const bestWords = SPANISH_WORDS.map(normalizeWord)
+  const bestWords = words
     .filter((word) => canBuildWord(word, shuffledLetters))
     .sort((a, b) => b.length - a.length || a.localeCompare(b))
     .slice(0, 5);
@@ -38,6 +43,8 @@ export function generateLettersChallenge(dateKey: string): LettersChallenge {
     dateKey,
     letters: shuffledLetters,
     bestWords,
+    dictionarySize: words.length,
+    wordSet,
   };
 }
 
@@ -52,8 +59,8 @@ export function evaluateLettersAttempt(word: string, challenge: LettersChallenge
     return { valid: false, normalizedWord, score: 0, message: 'La palabra usa letras que no están disponibles.' };
   }
 
-  if (!WORD_SET.has(normalizedWord)) {
-    return { valid: false, normalizedWord, score: 0, message: 'No está en el diccionario local.' };
+  if (!challenge.wordSet.has(normalizedWord)) {
+    return { valid: false, normalizedWord, score: 0, message: 'No está en el diccionario español.' };
   }
 
   const score = normalizedWord.length === 9 ? 18 : normalizedWord.length;
@@ -88,4 +95,8 @@ export function normalizeWord(word: string) {
     .replace(/ñ/g, 'n')
     .replace(/[^a-zA-Z]/g, '')
     .toUpperCase();
+}
+
+function buildDictionaryWords(words: readonly string[]) {
+  return [...new Set(words.map(normalizeWord).filter((word) => word.length >= 2 && word.length <= 9))];
 }
