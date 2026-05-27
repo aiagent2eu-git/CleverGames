@@ -135,10 +135,6 @@ export function LettersGame({ dateKey, userId, groupIds, playerName, onResultSav
         {attempt?.message ?? 'Cada letra puede usarse tantas veces como aparece.'}
       </p>
 
-      <details className="solution-details">
-        <summary>Mejores palabras del diccionario</summary>
-        <p>{challenge.bestWords.join(', ')}</p>
-      </details>
     </section>
   );
 }
