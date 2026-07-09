@@ -401,6 +401,7 @@ function App() {
               groupId={selectedGroupId}
               groupName={selectedGroup?.name ?? null}
               refreshToken={refreshToken}
+              enabled={canPlay}
             />
           </aside>
         </motion.section>
@@ -490,6 +491,7 @@ function App() {
                   groupId={selectedGroupId}
                   groupName={selectedGroup.name}
                   refreshToken={refreshToken}
+                  enabled={canPlay}
                 />
               </>
             ) : (

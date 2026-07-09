@@ -10,6 +10,7 @@ type DailyLeaderboardProps = {
   groupId: string | null;
   groupName: string | null;
   refreshToken: number;
+  enabled?: boolean;
 };
 
 const labels: Record<GameType, string> = {
@@ -25,6 +26,7 @@ export function DailyLeaderboard({
   groupId,
   groupName,
   refreshToken,
+  enabled = true,
 }: DailyLeaderboardProps) {
   const [results, setResults] = useState<DailyResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -35,6 +37,11 @@ export function DailyLeaderboard({
   }, [activeGame, sudokuLevel]);
 
   const loadResults = useCallback(async () => {
+    if (!enabled) {
+      setResults([]);
+      return;
+    }
+
     setLoading(true);
     const result = await getDailyResults({
       challengeDate: dateKey,
@@ -44,7 +51,7 @@ export function DailyLeaderboard({
     });
     setResults(result.data);
     setLoading(false);
-  }, [activeGame, dateKey, difficulty, groupId]);
+  }, [activeGame, dateKey, difficulty, enabled, groupId]);
 
   useEffect(() => {
     void loadResults();
@@ -64,7 +71,9 @@ export function DailyLeaderboard({
       </div>
 
       <ol className="score-list">
-        {results.length === 0 ? (
+        {!enabled ? (
+          <li className="empty-row">Autentícate para ver clasificaciones.</li>
+        ) : results.length === 0 ? (
           <li className="empty-row">Aún no hay resultados guardados para este reto.</li>
         ) : (
           results.map((result, index) => (
