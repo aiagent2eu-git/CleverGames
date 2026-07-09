@@ -205,6 +205,30 @@ export type ServiceResult<T> = {
 
 type SupabaseClientInstance = SupabaseClient<Database, 'public'>;
 
+const SUPABASE_NETWORK_ERROR: ServiceError = {
+  message:
+    'No se puede conectar con Supabase. Revisa que el proyecto esté activo y que VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY sean correctas en Vercel.',
+};
+
+function normalizeSupabaseError(error: unknown): ServiceError {
+  if (!error) return SUPABASE_NETWORK_ERROR;
+
+  const message =
+    typeof error === 'object' && error !== null && 'message' in error
+      ? String((error as { message?: unknown }).message ?? '')
+      : String(error);
+
+  if (
+    message.toLowerCase().includes('failed to fetch') ||
+    message.toLowerCase().includes('networkerror') ||
+    message.toLowerCase().includes('fetch failed')
+  ) {
+    return SUPABASE_NETWORK_ERROR;
+  }
+
+  return { message: message || SUPABASE_NETWORK_ERROR.message };
+}
+
 let supabaseClient: SupabaseClientInstance | null = null;
 
 export function getSupabaseClient() {
@@ -231,8 +255,12 @@ export async function getAuthSession(): Promise<ServiceResult<Session | null>> {
     return { data: null, error: { message: 'Supabase is not configured; using local demo session.' } };
   }
 
-  const { data, error } = await client.auth.getSession();
-  return { data: data.session, error };
+  try {
+    const { data, error } = await client.auth.getSession();
+    return { data: data.session, error: error ? normalizeSupabaseError(error) : null };
+  } catch (error) {
+    return { data: null, error: normalizeSupabaseError(error) };
+  }
 }
 
 export function onAuthStateChange(callback: (event: AuthChangeEvent, session: Session | null) => void) {
@@ -249,14 +277,18 @@ export async function sendEmailOtp(email: string): Promise<ServiceResult<null>> 
     return { data: null, error: { message: 'Supabase is not configured.' } };
   }
 
-  const { error } = await client.auth.signInWithOtp({
-    email,
-    options: {
-      shouldCreateUser: true,
-      emailRedirectTo: getAuthRedirectUrl(),
-    },
-  });
-  return { data: null, error };
+  try {
+    const { error } = await client.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: getAuthRedirectUrl(),
+      },
+    });
+    return { data: null, error: error ? normalizeSupabaseError(error) : null };
+  } catch (error) {
+    return { data: null, error: normalizeSupabaseError(error) };
+  }
 }
 
 function getAuthRedirectUrl() {
@@ -269,12 +301,16 @@ export async function verifyEmailOtp(email: string, token: string): Promise<Serv
     return { data: null, error: { message: 'Supabase is not configured.' } };
   }
 
-  const { data, error } = await client.auth.verifyOtp({
-    email,
-    token,
-    type: 'email',
-  });
-  return { data: data.session, error };
+  try {
+    const { data, error } = await client.auth.verifyOtp({
+      email,
+      token,
+      type: 'email',
+    });
+    return { data: data.session, error: error ? normalizeSupabaseError(error) : null };
+  } catch (error) {
+    return { data: null, error: normalizeSupabaseError(error) };
+  }
 }
 
 export async function signOut(): Promise<ServiceResult<null>> {
