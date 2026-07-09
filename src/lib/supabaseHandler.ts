@@ -9,8 +9,9 @@ import type { GameType, JsonValue } from '../game/types';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+const PUBLIC_PLAY_ONLY_MODE = true;
 
-export const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+export const isSupabaseConfigured = !PUBLIC_PLAY_ONLY_MODE && Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
 type Database = {
   public: {

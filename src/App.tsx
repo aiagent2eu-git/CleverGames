@@ -1,55 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CalendarDays, Gamepad2, Hash, LockKeyhole, Trophy, UsersRound } from 'lucide-react';
-import { AuthPanel } from './components/AuthPanel';
+import { CalendarDays } from 'lucide-react';
 import { DailyLeaderboard } from './components/DailyLeaderboard';
 import { GameTabs } from './components/GameTabs';
-import { GroupChat } from './components/GroupChat';
-import { GroupRankingsOverview } from './components/GroupRankingsOverview';
-import { GroupsPanel } from './components/GroupsPanel';
 import { LettersGame } from './components/LettersGame';
 import { LevelSelector } from './components/LevelSelector';
 import { NumbersGame } from './components/NumbersGame';
 import { SudokuGame } from './components/SudokuGame';
 import { formatDailyDate, getLocalDateKey } from './game/daily';
-import type { AppTextState, CompetitionGroup, GameType, GroupMessage } from './game/types';
-import { isSupabaseConfigured } from './lib/supabaseHandler';
-import {
-  getCurrentAuthState,
-  listenAuthChanges,
-  logout,
-  sendLoginCode,
-  type AuthState,
-} from './services/authService';
-import {
-  createGroup,
-  deleteGroup,
-  getGroupMessages,
-  getGroupsForProfile,
-  joinGroup,
-  leaveGroup,
-  sendGroupMessage,
-} from './services/groupService';
-
-type AppView = 'play' | 'groups';
-
-const SELECTED_GROUP_KEY_PREFIX = 'clevergames.selectedGroupId.';
-
-const groupRoleLabels = {
-  owner: 'Creador',
-  admin: 'Admin',
-  member: 'Miembro',
-} as const;
-
-const gameLabels: Record<GameType, string> = {
-  sudoku: 'Sudoku',
-  numbers: 'Cifras',
-  letters: 'Letras',
-};
-
-function getSelectedGroupKey(profileId: string) {
-  return `${SELECTED_GROUP_KEY_PREFIX}${profileId}`;
-}
+import type { AppTextState, GameType } from './game/types';
 
 declare global {
   interface Window {
@@ -58,214 +17,28 @@ declare global {
   }
 }
 
-const initialAuthState: AuthState = {
-  profile: null,
-  session: null,
-  isDemo: !isSupabaseConfigured,
-};
+const playerName = 'Jugador';
 
 function App() {
-  const [activeView, setActiveView] = useState<AppView>('play');
   const [activeGame, setActiveGame] = useState<GameType>('sudoku');
   const [sudokuLevel, setSudokuLevel] = useState(1);
-  const [authState, setAuthState] = useState<AuthState>(initialAuthState);
-  const [playerName, setPlayerName] = useState(() => localStorage.getItem('clevergames.playerName') ?? 'Player');
-  const [groups, setGroups] = useState<CompetitionGroup[]>([]);
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<GroupMessage[]>([]);
   const [refreshToken, setRefreshToken] = useState(0);
   const [statusMessage, setStatusMessage] = useState('');
   const [currentChallenge, setCurrentChallenge] = useState<AppTextState['currentChallenge']>({});
   const dateKey = useMemo(() => getLocalDateKey(), []);
   const prettyDate = useMemo(() => formatDailyDate(dateKey), [dateKey]);
 
-  const selectedGroup = useMemo(
-    () => groups.find((group) => group.id === selectedGroupId) ?? null,
-    [groups, selectedGroupId],
-  );
-  const resultGroupIds = useMemo(() => groups.map((group) => group.id), [groups]);
-  const authenticatedProfile = authState.isDemo ? null : authState.profile;
-  const authenticatedProfileId = authenticatedProfile?.id ?? null;
-
-  const selectGroup = useCallback(
-    (groupId: string | null) => {
-      setSelectedGroupId(groupId);
-      if (!authenticatedProfileId) return;
-
-      const key = getSelectedGroupKey(authenticatedProfileId);
-      if (groupId) localStorage.setItem(key, groupId);
-      else localStorage.removeItem(key);
-    },
-    [authenticatedProfileId],
-  );
-
-  const refreshAuth = useCallback(async () => {
-    const next = await getCurrentAuthState();
-    setAuthState(next);
-    if (next.profile) {
-      setPlayerName(next.profile.displayName);
-      localStorage.setItem('clevergames.playerName', next.profile.displayName);
-    }
-  }, []);
-
-  const refreshGroups = useCallback(async () => {
-    const result = await getGroupsForProfile(authenticatedProfile);
-    setGroups(result.data);
-    if (result.error) setStatusMessage(result.error.message);
-  }, [authenticatedProfile]);
-
-  const refreshMessages = useCallback(async () => {
-    const result = await getGroupMessages(selectedGroupId);
-    setMessages(result.data);
-    if (result.error) setStatusMessage(result.error.message);
-  }, [selectedGroupId]);
-
-  useEffect(() => {
-    void refreshAuth();
-    return listenAuthChanges(() => {
-      void refreshAuth();
-    });
-  }, [refreshAuth]);
-
-  useEffect(() => {
-    void refreshGroups();
-  }, [refreshGroups]);
-
-  useEffect(() => {
-    if (selectedGroupId && groups.length > 0 && !groups.some((group) => group.id === selectedGroupId)) {
-      selectGroup(null);
-    }
-  }, [groups, selectGroup, selectedGroupId]);
-
-  useEffect(() => {
-    if (!authenticatedProfileId) {
-      setSelectedGroupId(null);
-      return;
-    }
-
-    if (selectedGroupId || groups.length === 0) return;
-
-    const storedGroupId = localStorage.getItem(getSelectedGroupKey(authenticatedProfileId));
-    if (storedGroupId && groups.some((group) => group.id === storedGroupId)) {
-      setSelectedGroupId(storedGroupId);
-    }
-  }, [authenticatedProfileId, groups, selectedGroupId]);
-
-  useEffect(() => {
-    void refreshMessages();
-  }, [refreshMessages]);
-
   const handleResultSaved = useCallback(() => {
-    localStorage.setItem('clevergames.playerName', playerName.trim());
-    setStatusMessage(
-      resultGroupIds.length > 0
-        ? `Resultado guardado y compartido en ${resultGroupIds.length} ${
-            resultGroupIds.length === 1 ? 'grupo' : 'grupos'
-          }.`
-        : 'Resultado guardado.',
-    );
+    setStatusMessage('Resultado guardado en este dispositivo.');
     setRefreshToken((value) => value + 1);
-  }, [playerName, resultGroupIds.length]);
-
-  const handleCreateGroup = useCallback(
-    async (name: string, description: string) => {
-      if (!authenticatedProfile) return;
-      const result = await createGroup(authenticatedProfile, { name, description });
-      if (result.error) {
-        setStatusMessage(result.error.message);
-        return;
-      }
-      if (result.data) {
-        setStatusMessage(`Grupo creado. Código: ${result.data.inviteCode}`);
-        setGroups((current) => [result.data!, ...current.filter((group) => group.id !== result.data!.id)]);
-        selectGroup(result.data.id);
-        setMessages([]);
-        setRefreshToken((value) => value + 1);
-      }
-    },
-    [authenticatedProfile, selectGroup],
-  );
-
-  const handleJoinGroup = useCallback(
-    async (inviteCode: string) => {
-      if (!authenticatedProfile) return;
-      const result = await joinGroup(authenticatedProfile, inviteCode);
-      if (result.error) {
-        setStatusMessage(result.error.message);
-        return;
-      }
-      if (result.data) {
-        setStatusMessage(`Te has unido a ${result.data.name}.`);
-        setGroups((current) => [result.data!, ...current.filter((group) => group.id !== result.data!.id)]);
-        selectGroup(result.data.id);
-        setMessages([]);
-        setRefreshToken((value) => value + 1);
-      }
-    },
-    [authenticatedProfile, selectGroup],
-  );
-
-  const removeGroupFromView = useCallback(
-    (group: CompetitionGroup) => {
-      setGroups((current) => current.filter((item) => item.id !== group.id));
-      if (selectedGroupId === group.id) {
-        selectGroup(null);
-        setMessages([]);
-      }
-      setRefreshToken((value) => value + 1);
-    },
-    [selectGroup, selectedGroupId],
-  );
-
-  const handleLeaveGroup = useCallback(
-    async (group: CompetitionGroup) => {
-      if (!authenticatedProfile) return;
-      const result = await leaveGroup(authenticatedProfile, group);
-      if (result.error) {
-        setStatusMessage(result.error.message);
-        return;
-      }
-
-      removeGroupFromView(group);
-      setStatusMessage(`Has abandonado ${group.name}.`);
-    },
-    [authenticatedProfile, removeGroupFromView],
-  );
-
-  const handleDeleteGroup = useCallback(
-    async (group: CompetitionGroup) => {
-      if (!authenticatedProfile) return;
-      const result = await deleteGroup(authenticatedProfile, group);
-      if (result.error) {
-        setStatusMessage(result.error.message);
-        return;
-      }
-
-      removeGroupFromView(group);
-      setStatusMessage(`Grupo eliminado: ${group.name}.`);
-    },
-    [authenticatedProfile, removeGroupFromView],
-  );
-
-  const handleSendMessage = useCallback(
-    async (body: string) => {
-      if (!authenticatedProfile || !selectedGroupId) return;
-      const result = await sendGroupMessage(authenticatedProfile, selectedGroupId, body);
-      if (result.error) {
-        setStatusMessage(result.error.message);
-        return;
-      }
-      await refreshMessages();
-    },
-    [authenticatedProfile, refreshMessages, selectedGroupId],
-  );
+  }, []);
 
   useEffect(() => {
     const textState: AppTextState = {
       dateKey,
       activeGame,
       selectedSudokuLevel: sudokuLevel,
-      selectedGroupId,
+      selectedGroupId: null,
       currentChallenge,
     };
     window.render_game_to_text = () => JSON.stringify(textState);
@@ -275,19 +48,11 @@ function App() {
       delete window.render_game_to_text;
       delete window.advanceTime;
     };
-  }, [activeGame, currentChallenge, dateKey, selectedGroupId, sudokuLevel]);
-
-  const userId = authenticatedProfile?.id ?? null;
-  const canPlay = Boolean(authenticatedProfile);
-  const effectivePlayerName = playerName.trim() || authenticatedProfile?.displayName || 'Player';
-  const selectedGameLabel = activeGame === 'sudoku' ? `${gameLabels[activeGame]} nivel ${sudokuLevel}` : gameLabels[activeGame];
-  const selectedGroupRole = selectedGroup?.role ? groupRoleLabels[selectedGroup.role] : 'Miembro';
-  const shareTargetName =
-    resultGroupIds.length === 0 ? 'Personales' : resultGroupIds.length === 1 ? groups[0].name : `${resultGroupIds.length} grupos`;
+  }, [activeGame, currentChallenge, dateKey, sudokuLevel]);
 
   return (
-    <main className="app-shell">
-      <header className="topbar" aria-label="Estado del proyecto">
+    <main className="app-shell public-app">
+      <header className="topbar" aria-label="Juego diario">
         <div>
           <p className="eyebrow">CleverGames</p>
           <h1>Diario de Sudoku, Cifras y Letras</h1>
@@ -300,217 +65,83 @@ function App() {
         </nav>
       </header>
 
-      <nav className="section-tabs" aria-label="Secciones principales">
-        <button
-          className={activeView === 'play' ? 'section-tab active' : 'section-tab'}
-          type="button"
-          onClick={() => setActiveView('play')}
-        >
-          <Gamepad2 size={18} />
-          <span>Jugar</span>
-        </button>
-        <button
-          className={activeView === 'groups' ? 'section-tab active' : 'section-tab'}
-          type="button"
-          onClick={() => setActiveView('groups')}
-        >
-          <UsersRound size={18} />
-          <span>Grupos</span>
-        </button>
-      </nav>
+      <motion.section
+        className="workspace social-workspace"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: 'easeOut' }}
+      >
+        <section className="play-area" aria-label="Juego diario">
+          <div className="control-bar">
+            <GameTabs activeGame={activeGame} onChange={setActiveGame} />
+            <div className="active-group-banner">
+              <span>Modo público</span>
+              <strong>Juega sin registro</strong>
+            </div>
+          </div>
 
-      {activeView === 'play' ? (
-        <motion.section
-          className="workspace social-workspace"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: 'easeOut' }}
-        >
-          <section className="play-area" aria-label="Juego diario">
-            {canPlay ? (
-              <>
-                <div className="control-bar">
-                  <GameTabs activeGame={activeGame} onChange={setActiveGame} />
-                  <div className="active-group-banner">
-                    <span>{resultGroupIds.length > 0 ? 'Compartiendo' : 'Resultados'}</span>
-                    <strong>{shareTargetName}</strong>
-                  </div>
-                </div>
+          {activeGame === 'sudoku' ? <LevelSelector level={sudokuLevel} onChange={setSudokuLevel} /> : null}
 
-                {activeGame === 'sudoku' ? <LevelSelector level={sudokuLevel} onChange={setSudokuLevel} /> : null}
-
-                {activeGame === 'sudoku' ? (
-                  <SudokuGame
-                    dateKey={dateKey}
-                    level={sudokuLevel}
-                    userId={userId}
-                    groupIds={resultGroupIds}
-                    playerName={effectivePlayerName}
-                    onResultSaved={handleResultSaved}
-                    onStateChange={setCurrentChallenge}
-                  />
-                ) : null}
-
-                {activeGame === 'numbers' ? (
-                  <NumbersGame
-                    dateKey={dateKey}
-                    userId={userId}
-                    groupIds={resultGroupIds}
-                    playerName={effectivePlayerName}
-                    onResultSaved={handleResultSaved}
-                    onStateChange={setCurrentChallenge}
-                  />
-                ) : null}
-
-                {activeGame === 'letters' ? (
-                  <LettersGame
-                    dateKey={dateKey}
-                    userId={userId}
-                    groupIds={resultGroupIds}
-                    playerName={effectivePlayerName}
-                    onResultSaved={handleResultSaved}
-                    onStateChange={setCurrentChallenge}
-                  />
-                ) : null}
-              </>
-            ) : (
-              <section className="locked-play" aria-label="Juego bloqueado">
-                <LockKeyhole size={32} aria-hidden="true" />
-                <div>
-                  <p className="eyebrow">Acceso privado</p>
-                  <h2>Autentícate para jugar</h2>
-                  <p>Entra con tu email para desbloquear los retos diarios y guardar tus resultados.</p>
-                </div>
-              </section>
-            )}
-          </section>
-
-          <aside className="social-rail" aria-label="Cuenta y clasificación">
-            <AuthPanel
-              authState={authState}
-              onSendLoginCode={sendLoginCode}
-              onLogout={() => {
-                void logout().then(refreshAuth);
-              }}
-            />
-            {statusMessage ? <p className="service-message">{statusMessage}</p> : null}
-            <DailyLeaderboard
-              activeGame={activeGame}
+          {activeGame === 'sudoku' ? (
+            <SudokuGame
               dateKey={dateKey}
-              sudokuLevel={sudokuLevel}
-              groupId={selectedGroupId}
-              groupName={selectedGroup?.name ?? null}
-              refreshToken={refreshToken}
-              enabled={canPlay}
+              level={sudokuLevel}
+              userId={null}
+              groupIds={[]}
+              playerName={playerName}
+              onResultSaved={handleResultSaved}
+              onStateChange={setCurrentChallenge}
             />
-          </aside>
-        </motion.section>
-      ) : (
-        <motion.section
-          className="group-dashboard"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: 'easeOut' }}
-        >
-          <section className="groups-column" aria-label="Listado de grupos">
-            <AuthPanel
-              authState={authState}
-              onSendLoginCode={sendLoginCode}
-              onLogout={() => {
-                void logout().then(refreshAuth);
-              }}
-            />
-            <GroupsPanel
-              profile={authenticatedProfile}
-              groups={groups}
-              selectedGroupId={selectedGroupId}
-              onSelectGroup={selectGroup}
-              onCreateGroup={handleCreateGroup}
-              onJoinGroup={handleJoinGroup}
-              onLeaveGroup={handleLeaveGroup}
-              onDeleteGroup={handleDeleteGroup}
-            />
-            {statusMessage ? <p className="service-message">{statusMessage}</p> : null}
-          </section>
+          ) : null}
 
-          <section className="group-detail" aria-label="Detalle del grupo">
-            <section className="social-card group-score-controls" aria-label="Filtro de puntuaciones de grupo">
-              <div className={selectedGroup ? 'group-hero active' : 'group-hero'}>
-                <div className="group-hero-copy">
-                  <p className="eyebrow">{selectedGroup ? 'Grupo activo' : 'Grupos'}</p>
-                  <h2>{selectedGroup ? selectedGroup.name : 'Elige un grupo'}</h2>
-                  <p>
-                    {selectedGroup
-                      ? selectedGroup.description || 'Chat único, puntuaciones diarias y retos compartidos para este grupo.'
-                      : 'Selecciona un grupo de la izquierda para abrir su chat y su clasificación diaria.'}
-                  </p>
-                </div>
-                {selectedGroup ? (
-                  <div className="group-hero-meta" aria-label="Datos del grupo">
-                    <span className="invite-chip">
-                      <Hash size={16} aria-hidden="true" />
-                      {selectedGroup.inviteCode}
-                    </span>
-                    <span className="role-chip">{selectedGroupRole}</span>
-                  </div>
-                ) : (
-                  <div className="group-hero-empty" aria-hidden="true">
-                    <UsersRound size={38} />
-                  </div>
-                )}
-              </div>
-              <div className="group-controls-body">
-                <div className="group-filter-heading">
-                  <div>
-                    <p className="eyebrow">Puntuaciones del día</p>
-                    <strong>{selectedGameLabel}</strong>
-                  </div>
-                  {selectedGroup ? (
-                    <span className="live-scope">
-                      <Trophy size={16} aria-hidden="true" />
-                      Competición privada
-                    </span>
-                  ) : null}
-                </div>
-                <GameTabs activeGame={activeGame} onChange={setActiveGame} />
-                {activeGame === 'sudoku' ? <LevelSelector level={sudokuLevel} onChange={setSudokuLevel} /> : null}
-              </div>
-            </section>
-            {selectedGroup ? (
-              <>
-                <GroupRankingsOverview
-                  dateKey={dateKey}
-                  groupId={selectedGroupId}
-                  groupName={selectedGroup.name}
-                  refreshToken={refreshToken}
-                />
-                <DailyLeaderboard
-                  activeGame={activeGame}
-                  dateKey={dateKey}
-                  sudokuLevel={sudokuLevel}
-                  groupId={selectedGroupId}
-                  groupName={selectedGroup.name}
-                  refreshToken={refreshToken}
-                  enabled={canPlay}
-                />
-              </>
-            ) : (
-              <section className="social-card empty-group-state" aria-label="Puntuaciones de grupo">
-                <p className="eyebrow">Clasificación</p>
-                <h2>Sin grupo seleccionado</h2>
-                <p>Selecciona o crea un grupo para ver las puntuaciones de ese día.</p>
-              </section>
-            )}
-            <GroupChat
-              profile={authenticatedProfile}
-              group={selectedGroup}
-              messages={messages}
-              onSendMessage={handleSendMessage}
-              onRefresh={refreshMessages}
+          {activeGame === 'numbers' ? (
+            <NumbersGame
+              dateKey={dateKey}
+              userId={null}
+              groupIds={[]}
+              playerName={playerName}
+              onResultSaved={handleResultSaved}
+              onStateChange={setCurrentChallenge}
             />
+          ) : null}
+
+          {activeGame === 'letters' ? (
+            <LettersGame
+              dateKey={dateKey}
+              userId={null}
+              groupIds={[]}
+              playerName={playerName}
+              onResultSaved={handleResultSaved}
+              onStateChange={setCurrentChallenge}
+            />
+          ) : null}
+        </section>
+
+        <aside className="social-rail" aria-label="Clasificación local">
+          <section className="social-card" aria-label="Modo público">
+            <div className="panel-heading compact">
+              <div>
+                <p className="eyebrow">Acceso público</p>
+                <h2>Jugar sin cuenta</h2>
+              </div>
+            </div>
+            <p className="help-copy">
+              Temporalmente la web funciona sin login, base de datos, grupos ni chat. Los resultados se guardan solo en este
+              navegador.
+            </p>
           </section>
-        </motion.section>
-      )}
+          {statusMessage ? <p className="service-message">{statusMessage}</p> : null}
+          <DailyLeaderboard
+            activeGame={activeGame}
+            dateKey={dateKey}
+            sudokuLevel={sudokuLevel}
+            groupId={null}
+            groupName={null}
+            refreshToken={refreshToken}
+            enabled
+          />
+        </aside>
+      </motion.section>
     </main>
   );
 }
